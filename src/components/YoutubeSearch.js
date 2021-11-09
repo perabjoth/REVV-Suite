@@ -5,7 +5,7 @@ import { Grid } from '@material-ui/core';
 import { isMobile } from 'react-device-detect';
 
 const opts = {
-    height: isMobile ? '180' : '300',
+    height: isMobile ? '320' : '640',
     width: '100%',
     playerVars: {
         // https://developers.google.com/youtube/player_parameters
@@ -46,15 +46,11 @@ export default class YoutubeSearch extends Component {
 
     generateVideos(videoList) {
         let videoComponent = []
-        for (let index = 0; index < videoList.length; index+=2) {
+        for (let index = 0; index < videoList.length; index++) {
             const video = videoList[index];
-            const video2 = videoList[index+1]
             videoComponent.push(<Grid container spacing={3} >
-                <Grid item md={6} xs={6} alignContent='center' alignItems='center'>
+                <Grid item md={12} xs={12} alignContent='center' alignItems='center'>
                     <YouTube videoId={video.id.videoId} opts={opts} />
-                </Grid>
-                <Grid item md={6} xs={6} alignContent='center' alignItems='center'>
-                    <YouTube videoId={video2.id.videoId} opts={opts} />
                 </Grid>
             </Grid>)
         }
