@@ -1,0 +1,61 @@
+import React, { Component } from 'react'
+import CoingeckoPrice from '../api/CoingeckoPrice';
+import TextField from '@mui/material/TextField';
+import REVVlogo from '../img/REVV_logo.png';
+import { Avatar, InputAdornment } from '@mui/material';
+import { IconButton } from '@mui/material';
+
+export default class REVVPrice extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            price: 0
+        }
+    }
+
+    setPrice(value) {
+        this.setState({ price: value })
+    }
+
+    getPrice = async (e) => {
+        await CoingeckoPrice
+            .get(`price?ids=revv&vs_currencies=usd`)
+            .then((response) => {
+                this.setPrice(response.data.revv.usd)
+            }).catch((e) => {
+                console.error(e)
+            });
+    }
+
+
+    componentDidMount() {
+        this.getPrice()
+    }
+
+    render() {
+        return (
+            <TextField
+                fullWidth
+                id="revvprice"
+                label="REVV Price"
+                variant="outlined"
+                value={`${this.state.price.toString()} USD`}
+                disabled
+                sx={{ textAlign: 'center', flexGrow: 1 }}
+                InputProps={{
+                    startAdornment:
+                        <InputAdornment position="start">
+                            <IconButton
+                                aria-label="copy"
+                                edge="end"
+                            >
+                                <Avatar src={REVVlogo} />
+                            </IconButton>
+                        </InputAdornment>,
+                }
+                } >
+
+            </TextField>
+        )
+    }
+}
