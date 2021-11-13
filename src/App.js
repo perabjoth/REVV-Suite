@@ -1,83 +1,59 @@
 import './App.css';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@material-ui/core/styles';
+import React, { lazy, Suspense } from "react";
+import theme from './components/theme';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import { Container, Grid } from '@material-ui/core';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import { Avatar, Box, Button } from '@mui/material';
-import REVVlogo from './img/REVV_logo.png';
-import Donate from './components/Donate';
+import Container from '@material-ui/core/Container';
+import Grid from '@material-ui/core/Grid';
+import Box from '@mui/system/Box';
+import Tip from './components/Tip';
 import REVVPrice from './components/REVVPrice';
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import Opensea from './components/Opensea';
-import YoutubeSearch from './components/YoutubeSearch'
+import Header from './components/Header';
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
+const Home = lazy(() => import('./components/Home'));
+const Leaderboard = lazy(() => import('./components/Leaderboard'));
+const Transactions = lazy(() => import('./components/Transactions'));
 
-const theme = createTheme({
-  palette: {
-    mode: "dark",
-    primary: {
-      main: '#3f51b5',
-    },
-    secondary: {
-      main: '#f50057',
-    },
-  }
-});
 
-function appBarLabel(label, detail) {
-  return (
-    <Toolbar>
-      <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
-        <Avatar src={REVVlogo} className="App-logo" />
-      </IconButton>
-      <Typography variant="h5" noWrap component="div" className="revvtitle">
-        {label} ({detail})
-      </Typography>
-    </Toolbar>
-  );
-}
 
 function App() {
   return (
-    <div>
-      <CssBaseline />
-      <ThemeProvider theme={theme}>
-        <Box className="mainDiv">
-          <AppBar position="static" color="primary">
-            {appBarLabel('REVV Suite', 'Unofficial')}
-          </AppBar>
-          <Container component="main" className="container">
-            <Grid container spacing={3} >
-              <Grid item md={6} xs={12}>
-                <REVVPrice />
+    <Suspense fallback={<Backdrop
+      sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      open
+    >
+      <CircularProgress color="inherit" />
+    </Backdrop>} >
+      <Router>
+        <ThemeProvider theme={theme()}>
+          <CssBaseline />
+          <Box className="mainDiv">
+            <Header />
+            <Container component="main" className="container">
+              <Grid container spacing={3} >
+                <Grid item md={6} xs={12}>
+                  <REVVPrice />
+                </Grid>
+                <Grid item md={6} xs={12}>
+                  <Tip />
+                </Grid>
               </Grid>
-              <Grid item md={6} xs={12}>
-                <Donate />
-              </Grid>
-            </Grid>
-            <Grid container spacing={3} >
-              <Grid item md={6} xs={12}>
-                <a target="_blank" rel="noreferrer" href="https://perabjoth.github.io/REVV-Leaderboard">
-                  <Button color="primary" fullWidth variant="contained" startIcon={<FormatListNumberedIcon />}> Check Leaderboard Prizes</Button>
-                </a>
-              </Grid>
-              <Grid item md={6} xs={12}>
-                <a target="_blank" rel="noreferrer" href="https://perabjoth.github.io/REVV-Rewards">
-                  <Button color="primary" fullWidth variant="contained" startIcon={<AccountBalanceWalletIcon />}>Check Rewards Received</Button>
-                </a>
-              </Grid>
-            </Grid>
-            <br/>
-            <Opensea/>
-            <br/>
-            <YoutubeSearch/>
-          </Container>
-        </Box>
-      </ThemeProvider>
-    </div>
+              <Routes>
+                <Route exact path="/" element={<Home />} />
+              </Routes>
+              <Routes>
+                <Route path="/Leaderboard" element={<Leaderboard />} />
+              </Routes>
+              <Routes>
+                <Route path="/Rewards" element={<Transactions />} />
+              </Routes>
+            </Container>
+          </Box>
+        </ThemeProvider>
+      </Router>
+    </Suspense>
   );
 }
 

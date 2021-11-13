@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import searchYoutube from 'youtube-api-v3-search';
 import YouTube from 'react-youtube';
-import { Grid } from '@material-ui/core';
+import Grid  from '@mui/material/Grid';
 import { isMobile } from 'react-device-detect';
 
 const opts = {
@@ -41,7 +41,9 @@ export default class YoutubeSearch extends Component {
         await searchYoutube('AIzaSyCVf-RD5wQBDOdROwBT2AozbDcrZHwQdrM', options).then((response => {
             this.setVideoComponent(this.generateVideos(response.items))
             this.setVideosLoaded(true);
-        }));
+        })).catch((e) => {
+            console.error(e)
+        });;
     }
 
     generateVideos(videoList) {
@@ -50,7 +52,7 @@ export default class YoutubeSearch extends Component {
             const video = videoList[index];
             videoComponent.push(<Grid container spacing={3} >
                 <Grid item md={12} xs={12} alignContent='center' alignItems='center'>
-                    <YouTube videoId={video.id.videoId} opts={opts} />
+                    <YouTube videoId={video.id.videoId} opts={opts} key={video.id.videoId} />
                 </Grid>
             </Grid>)
         }
@@ -59,7 +61,7 @@ export default class YoutubeSearch extends Component {
     }
 
     componentDidMount() {
-        this.searchYoutube();
+        // this.searchYoutube();
     }
 
     render() {

@@ -1,8 +1,15 @@
 import React, { Component } from 'react'
-import { Accordion, AccordionSummary, AccordionDetails, Box, Button, Grid, Typography } from '@material-ui/core';
-import { ExpandMore } from '@mui/icons-material';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import ExpandMore from '@material-ui/icons/ExpandMore';
 import OpenseaLogo from '../img/Opensea.svg'
-import { Avatar, LinearProgress } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
+import LinearProgress from '@mui/material/LinearProgress';
 
 
 export default class Opensea extends Component {
@@ -22,7 +29,7 @@ export default class Opensea extends Component {
         this.setState({ loadingIframe: value });
     }
 
-    componentDidMount(){
+    componentDidMount() {
 
     }
 
@@ -36,7 +43,7 @@ export default class Opensea extends Component {
                 >
                     <Avatar src={OpenseaLogo} /> <Typography variant="h4" noWrap component="div" >&nbsp;REVV NFT Collection</Typography>
                 </AccordionSummary>
-                <AccordionDetails style={{display: 'block'}}>
+                <AccordionDetails style={{ display: 'block' }}>
                     <Grid container spacing={3} >
                         {!this.state.preview &&
                             <Grid item md={6} xs={6}>
@@ -44,7 +51,7 @@ export default class Opensea extends Component {
                             </Grid>
                         }
                         <Grid item md={this.state.preview ? 12 : 6} xs={this.state.preview ? 12 : 6}>
-                            <a target="_blank" rel="noreferrer" href="https://opensea.io/collection/revv-motorsport-inventory">
+                            <a target="_blank" rel="noreferrer" href="https://opensea.io/collection/revv-motorsport-inventory" style={{textDecoration: 'none'}}>
                                 <Button color="primary" fullWidth variant="contained" >View Opensea Collection</Button>
                             </a>
                         </Grid>
