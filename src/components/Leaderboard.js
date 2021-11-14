@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import MaterialTable from '@material-table/core';
 import { forwardRef } from 'react';
 import events from '../data/events.json';
+import CoingeckoPrice from '../api/CoingeckoPrice';
 import Popup from 'reactjs-popup';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -84,7 +85,7 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
     if (totalPrizeString.toUpperCase().includes("REVV")) {
         unit = "REVV"
     }
-    let prizeTotal = totalPrizeString.replace(/\D/g, '');   
+    let prizeTotal = totalPrizeString.replace(/\D/g, '');
 
     if (prizeData && prizeData.total > 0) {
         let totalDrivers = prizeData.total
@@ -310,6 +311,10 @@ export default class Leaderboard extends Component {
             eventDataLoaded: false,
             walletAddress: '',
             walletPositions: undefined,
+            columns: columns,
+            totalREVV: undefined,
+            totalDollars: undefined,
+            REVVPrice: 0.0
         };
     }
 
@@ -333,7 +338,14 @@ export default class Leaderboard extends Component {
     }
 
     setWalletAddress(value) {
-        this.setState({ walletAddress: value })
+        this.setState({
+            walletAddress: value,
+            walletPositions: undefined,
+            columns: columns,
+            totalREVV: undefined,
+            totalDollars: undefined,
+            REVVPrice: 0.0
+        })
     }
 
     filterWallet(entry) {
@@ -356,13 +368,55 @@ export default class Leaderboard extends Component {
         return undefined
     }
 
+    setREVVPrice(REVVPrice){
+        this.setState({
+            REVVPrice: REVVPrice
+        })
+    }
+
+
+    getREVVPrice = async (e) => {
+        await CoingeckoPrice
+            .get(`price?ids=revv&vs_currencies=usd`)
+            .then((response) => {
+                this.setREVVPrice(response.data.revv.usd)
+            }).catch((e) => {
+                console.error(e)
+            });
+    }
+
     setWalletPosition(walletPositions) {
         this.setState({ walletPositions: walletPositions })
+        let columnsDeepCopy = JSON.parse(JSON.stringify(this.state.columns));
+        columnsDeepCopy = columnsDeepCopy.filter(function (obj) {
+            return obj.field !== '';
+        });
+
+        let newColumns = [
+            { title: "Rank", field: "rank", filterPlaceholder: 'Filter Rank' },
+            { title: "REVV", field: "REVVReward", filterPlaceholder: 'Filter REVV' },
+            // { title: "Dollar", field: "dollarReward", filterPlaceholder: 'Filter Dollars' },
+        ]
+
+        columnsDeepCopy.splice(2, 0, ...newColumns)
+
+        this.setState({
+            columns: columnsDeepCopy
+        });
+
+        this.getREVVPrice()
+
+        let totalREVV = 0.0
+        let totalDollars = 0.0
         let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
         eventDeepCopy.forEach(event => {
+            event.REVVReward = 0.0
+            event.dollarReward = 0.0
+            event.rank = 0
             if (allSessions[event.id.toUpperCase()] && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
                 let currentRank = currentWalletPosition.rank
+                event.rank = currentRank
                 generatePrizeTable(allSessions[event.id.toUpperCase()],
                     event.data.prize,
                     event.data.splitLeaderboard,
@@ -392,12 +446,29 @@ export default class Leaderboard extends Component {
                         finalPrize = walletPrize.prize
                     }
 
+                    if (walletPrize.unit === "REVV") {
+                        event.REVVReward += parseFloat(finalPrize)
+                        totalREVV += parseFloat(finalPrize)
+                    } else {
+                        event.dollarReward += parseFloat(finalPrize)
+                        totalDollars += parseFloat(finalPrize)
+                    }
+
                     event.walletPrize = "Rank: " + currentRank.toString() + " - Prize: " + finalPrize.toString() + " " + walletPrize.unit
                 }
             }
         });
+
+        this.setTotalPrizes(totalREVV, totalDollars)
         this.setEventData(eventDeepCopy)
         this.setEventDataLoaded(true)
+    }
+
+    setTotalPrizes(totalREVV, totalDollars) {
+        this.setState({
+            totalREVV: totalREVV,
+            totalDollars: totalDollars
+        })
     }
 
     getWalletPositions() {
@@ -447,12 +518,36 @@ export default class Leaderboard extends Component {
                 <Grid item xs={12} alignContent="center" alignItems="center">
                     <Button color="primary" fullWidth variant="contained" onClick={() => this.getWalletPositions()} >Get Wallet List</Button>
                 </Grid>
+                {this.state.totalREVV &&
+                    <React.Fragment>
+                        <Grid item xs={6} alignContent="center" alignItems="center">
+                            <TextField
+                                id="totalRevv"
+                                label="Total REVV"
+                                variant="outlined"
+                                disabled
+                                fullWidth
+                                value={this.state.totalREVV.toFixed(2).toString()+" REVV"+(this.state.REVVPrice ? " ("+(this.state.REVVPrice*this.state.totalREVV).toFixed(2).toString()+" $)" : "")}
+                            />
+                        </Grid>
+                        <Grid item xs={6} alignContent="center" alignItems="center">
+                            <TextField
+                                id="totalDollars"
+                                label="Total Dollars (Old Prize Structure)"
+                                variant="outlined"
+                                disabled
+                                fullWidth
+                                value={this.state.totalDollars.toFixed(2).toString()+" $"}
+                            />
+                        </Grid>
+                    </React.Fragment>
+                }
                 <Grid item xs={12}>
                     <MaterialTable
                         theme={theme()}
                         style={{ width: "100%", display: "grid" }}
                         title="REVV Leaderboards"
-                        columns={columns}
+                        columns={this.state.columns}
                         data={this.state.eventData}
                         icons={tableIcons}
                         isLoading={!this.state.eventDataLoaded}
