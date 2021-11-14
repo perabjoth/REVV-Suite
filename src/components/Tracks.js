@@ -43,7 +43,7 @@ export default class Tracks extends Component {
     }
 
     render() {
-        
+
 
         return (
             <Grid container spacing={3} >
@@ -51,7 +51,7 @@ export default class Tracks extends Component {
                     this.state.tracks.map((track) => {
                         return <Grid item xs={12}>
                             <Card>
-                                <CardMedia className="track" style={{ width: track.width.toString() + "px", height: track.height.toString() + "px" }} image={track.default} />
+                                <CardMedia className="track" style={{ width: track.width ? track.width.toString() + "px" : "200px", height: track.height ? track.height.toString() + "px" : "100px" }} image={track.default} />
                                 <CardContent>
                                     {track.default.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, "").replace(/\.[^/.]+$/, "")}
                                 </CardContent>
