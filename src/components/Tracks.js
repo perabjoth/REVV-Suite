@@ -4,6 +4,7 @@ import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
 import CardMedia from '@material-ui/core/CardMedia';
 import CardContent from '@material-ui/core/CardContent';
+import reactImageSize from 'react-image-size';
 
 
 function importAll(r) {
@@ -23,25 +24,17 @@ export default class Tracks extends Component {
     componentDidMount() {
         let tracksWithDimensions = JSON.parse(JSON.stringify(this.state.tracks));
         tracksWithDimensions.forEach(track => {
-            let height = 0
-            let width = 0
-            let img = new Image()
-            img.onload = function () {
-                height = img.height
-                width = img.width
-                track.height = height
+
+            reactImageSize(track.default).then(({ width, height }) => {
                 track.width = width
-            }
-
-            img.src = track.default
+                track.height = height
+                this.setState({
+                    tracks: tracksWithDimensions
+                })
+            }).catch((e) => {
+                console.error(e)
+            });
         });
-
-        console.log(tracksWithDimensions)
-
-        this.setState({
-            tracks: tracksWithDimensions
-        })
-
     }
 
     render() {
@@ -50,10 +43,26 @@ export default class Tracks extends Component {
         return (
             <Grid container spacing={3} >
                 {
+
                     this.state.tracks.map((track) => {
+                        let width = track.width
+                        let height = track.height
+
+                        if (!width) {
+                            width = 100
+                        }
+
+                        if (!height) {
+                            height = 200
+                        }
+
                         return <Grid item xs={12}>
                             <Card>
-                                <CardMedia className="track" style={{ width: track.width ? track.width.toString() + "px" : "200px", height: track.height ? track.height.toString() + "px" : "100px" }} image={track.default} />
+                                <CardMedia
+                                    className="track"
+                                    style={{ width: width.toString() + "px", height: height.toString() + "px" }}
+                                    image={track.default}
+                                />
                                 <CardContent>
                                     {track.default.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, "").replace(/\.[^/.]+$/, "")}
                                 </CardContent>
