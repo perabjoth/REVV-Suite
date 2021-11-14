@@ -60,7 +60,7 @@ export default function Header() {
     return (
         <AppBar position="static" color="inherit">
             <Toolbar>
-                <IconButton edge="start" color="inherit" aria-label="menu" href="/">
+                <IconButton edge="start" color="inherit" aria-label="menu" href="/REVV-Suite/">
                     <Avatar src={REVVlogo} />
                 </IconButton>
                 <Typography variant="h5" noWrap component="div" className={"revvtitle"} style={{

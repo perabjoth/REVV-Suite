@@ -440,7 +440,7 @@ export default class Leaderboard extends Component {
                         break;
                     }
                 }
-                
+
                 event.unit = "REVV"
                 if (walletPrize) {
                     let finalPrize = ''
@@ -539,7 +539,7 @@ export default class Leaderboard extends Component {
                 </Grid>
                 {this.state.totalREVV &&
                     <React.Fragment>
-                        <Grid item xs={6} alignContent="center" alignItems="center">
+                        <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="totalRevv"
                                 label="Total REVV (New Prize Structure)"
@@ -549,7 +549,7 @@ export default class Leaderboard extends Component {
                                 value={this.state.totalREVV.toFixed(2).toString() + " REVV" + (this.state.REVVPrice ? " (" + (this.state.REVVPrice * this.state.totalREVV).toFixed(2).toString() + " $)" : "")}
                             />
                         </Grid>
-                        <Grid item xs={6} alignContent="center" alignItems="center">
+                        <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="totalDollars"
                                 label="Total Dollars (Old Prize Structure)"
@@ -562,7 +562,7 @@ export default class Leaderboard extends Component {
                     </React.Fragment>
                 }{this.state.averageRank > 0 &&
                     <React.Fragment>
-                        <Grid item xs={6} alignContent="center" alignItems="center">
+                        <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="averageRank"
                                 label="Average Rank (New Prize Structure)"
@@ -572,7 +572,7 @@ export default class Leaderboard extends Component {
                                 value={this.state.averageRank.toFixed(0).toString()}
                             />
                         </Grid>
-                        <Grid item xs={6} alignContent="center" alignItems="center">
+                        <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="averageREVV"
                                 label="Average REVV Earned (New Prize Structure)"
