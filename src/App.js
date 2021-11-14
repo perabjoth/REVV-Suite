@@ -9,6 +9,7 @@ import Box from '@mui/system/Box';
 import Tip from './components/Tip';
 import REVVPrice from './components/REVVPrice';
 import Header from './components/Header';
+import Tracks from './components/Tracks';
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -40,6 +41,7 @@ function App() {
                   <Tip />
                 </Grid>
               </Grid>
+              {/* <Tracks/> */}
               <Routes>
                 <Route exact path="/" element={<Home />} />
               </Routes>

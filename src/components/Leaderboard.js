@@ -435,7 +435,7 @@ export default class Leaderboard extends Component {
                     if (nextIndex === prize.length) {
                         walletPrize = prizeRank
                         break;
-                    } else if (currentRank >= prizeRank.rank && currentRank <= prize[nextIndex].rank) {
+                    } else if (currentRank >= prizeRank.rank && currentRank < prize[nextIndex].rank) {
                         walletPrize = prizeRank
                         break;
                     }
