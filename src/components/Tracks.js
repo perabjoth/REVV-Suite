@@ -36,6 +36,8 @@ export default class Tracks extends Component {
             img.src = track.default
         });
 
+        console.log(tracksWithDimensions)
+
         this.setState({
             tracks: tracksWithDimensions
         })
