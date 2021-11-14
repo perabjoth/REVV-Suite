@@ -51,7 +51,7 @@ const tableIcons = {
 
 const columns = [
     { field: 'timeStamp', title: 'Date', type: 'date', filterPlaceholder: 'Filter Date' },
-    { field: 'value', title: 'Reward', filterPlaceholder: 'Filter Reward' },
+    { field: 'value', title: 'Reward', filterPlaceholder: 'Filter Reward',render: rowData =>{return rowData.value +" REVV"} },
 ]
 
 
@@ -153,7 +153,7 @@ export default class Transactions extends Component {
                         <AccountBalanceWalletIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
-                        REVV Rewards
+                        Distributed REVV Rewards
                     </Typography>
                 </Grid>
                 <Grid item xs={12} component="form" onSubmit={(e) => { this.getTransactions(e) }} noValidate sx={{ mt: 3 }}>

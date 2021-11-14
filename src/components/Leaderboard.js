@@ -249,9 +249,7 @@ const columns = [
     { title: "Name", field: "data.name", filterPlaceholder: 'Filter Name' },
     {
         title: "View Pizes", field: "", render: rowData => {
-            if (rowData.walletPrize) {
-                return <div>{rowData.walletPrize}</div>
-            } else if (new Date(rowData.endTimestamp).getTime() < new Date().getTime()) {
+            if (new Date(rowData.endTimestamp).getTime() < new Date().getTime()) {
                 return <Popup trigger={<a>View Prizes</a>} position="bottom center" closeOnDocumentClick={false} modal closeOnEscape >
                     {close => {
                         return (
@@ -314,7 +312,9 @@ export default class Leaderboard extends Component {
             columns: columns,
             totalREVV: undefined,
             totalDollars: undefined,
-            REVVPrice: 0.0
+            REVVPrice: 0.0,
+            averageRank: 0.0,
+            averageREVV: 0.0
         };
     }
 
@@ -344,7 +344,9 @@ export default class Leaderboard extends Component {
             columns: columns,
             totalREVV: undefined,
             totalDollars: undefined,
-            REVVPrice: 0.0
+            REVVPrice: 0.0,
+            averageRank: 0.0,
+            averageREVV: 0.0
         })
     }
 
@@ -368,7 +370,7 @@ export default class Leaderboard extends Component {
         return undefined
     }
 
-    setREVVPrice(REVVPrice){
+    setREVVPrice(REVVPrice) {
         this.setState({
             REVVPrice: REVVPrice
         })
@@ -408,6 +410,9 @@ export default class Leaderboard extends Component {
 
         let totalREVV = 0.0
         let totalDollars = 0.0
+        let totalRank = 0.0
+        let participatedREVVCount = 0.0
+
         let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
         eventDeepCopy.forEach(event => {
             event.REVVReward = 0.0
@@ -435,9 +440,8 @@ export default class Leaderboard extends Component {
                         break;
                     }
                 }
-
-                event.walletPrize = undefined
-
+                
+                event.unit = "REVV"
                 if (walletPrize) {
                     let finalPrize = ''
                     if (currentWalletPosition.split) {
@@ -447,17 +451,24 @@ export default class Leaderboard extends Component {
                     }
 
                     if (walletPrize.unit === "REVV") {
+                        participatedREVVCount += 1.0
                         event.REVVReward += parseFloat(finalPrize)
                         totalREVV += parseFloat(finalPrize)
+                        totalRank += currentRank
                     } else {
+                        event.unit = "$"
                         event.dollarReward += parseFloat(finalPrize)
                         totalDollars += parseFloat(finalPrize)
                     }
-
-                    event.walletPrize = "Rank: " + currentRank.toString() + " - Prize: " + finalPrize.toString() + " " + walletPrize.unit
                 }
             }
         });
+
+        if (totalRank > 0 && totalREVV > 0) {
+            this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount)
+        } else {
+            this.setAverages(0, 0)
+        }
 
         this.setTotalPrizes(totalREVV, totalDollars)
         this.setEventData(eventDeepCopy)
@@ -500,6 +511,14 @@ export default class Leaderboard extends Component {
         this.setWalletPosition(walletPositions)
     }
 
+    setAverages(averageREVV, averageRank) {
+        this.setState({
+            averageREVV: averageREVV,
+            averageRank: averageRank
+        })
+    }
+
+
     render() {
 
         return (
@@ -523,11 +542,11 @@ export default class Leaderboard extends Component {
                         <Grid item xs={6} alignContent="center" alignItems="center">
                             <TextField
                                 id="totalRevv"
-                                label="Total REVV"
+                                label="Total REVV (New Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
-                                value={this.state.totalREVV.toFixed(2).toString()+" REVV"+(this.state.REVVPrice ? " ("+(this.state.REVVPrice*this.state.totalREVV).toFixed(2).toString()+" $)" : "")}
+                                value={this.state.totalREVV.toFixed(2).toString() + " REVV" + (this.state.REVVPrice ? " (" + (this.state.REVVPrice * this.state.totalREVV).toFixed(2).toString() + " $)" : "")}
                             />
                         </Grid>
                         <Grid item xs={6} alignContent="center" alignItems="center">
@@ -537,7 +556,30 @@ export default class Leaderboard extends Component {
                                 variant="outlined"
                                 disabled
                                 fullWidth
-                                value={this.state.totalDollars.toFixed(2).toString()+" $"}
+                                value={this.state.totalDollars.toFixed(2).toString() + " $"}
+                            />
+                        </Grid>
+                    </React.Fragment>
+                }{this.state.averageRank > 0 &&
+                    <React.Fragment>
+                        <Grid item xs={6} alignContent="center" alignItems="center">
+                            <TextField
+                                id="averageRank"
+                                label="Average Rank (New Prize Structure)"
+                                variant="outlined"
+                                disabled
+                                fullWidth
+                                value={this.state.averageRank.toFixed(0).toString()}
+                            />
+                        </Grid>
+                        <Grid item xs={6} alignContent="center" alignItems="center">
+                            <TextField
+                                id="averageREVV"
+                                label="Average REVV Earned (New Prize Structure)"
+                                variant="outlined"
+                                disabled
+                                fullWidth
+                                value={this.state.averageREVV.toFixed(2).toString() + " REVV" + (this.state.REVVPrice ? " (" + (this.state.REVVPrice * this.state.averageREVV).toFixed(2).toString() + " $)" : "")}
                             />
                         </Grid>
                     </React.Fragment>
@@ -556,7 +598,34 @@ export default class Leaderboard extends Component {
                             pageSizeOptions: [5, 10, 20, { value: this.state.eventData ? parseInt(this.state.eventData.length) : 100, label: 'All' }],
                             filtering: true,
                             search: false,
-                            // selection: true
+                            selection: true
+                        }}
+                        onSelectionChange={(rows) => {
+                            let totalREVV = 0.0
+                            let totalDollars = 0.0
+                            let totalRank = 0.0
+                            let participatedREVVCount = 0.0
+
+                            if (rows.length === 0) {
+                                rows = this.state.eventData
+                            }
+
+                            rows.forEach(row => {
+                                totalREVV += parseFloat(row.REVVReward)
+                                totalDollars += parseFloat(row.dollarReward)
+                                if (row.unit === "REVV") {
+                                    totalRank += parseFloat(row.rank)
+                                    participatedREVVCount += 1.0
+                                }
+                            });
+
+                            if (totalRank > 0 && totalREVV > 0) {
+                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount)
+                            } else {
+                                this.setAverages(0, 0)
+                            }
+
+                            this.setTotalPrizes(totalREVV, totalDollars)
                         }}
                     />
                 </Grid>
