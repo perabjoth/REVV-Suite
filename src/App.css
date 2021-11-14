@@ -3,6 +3,13 @@
   height: 100vh;
 }
 
+.track {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(287deg);
+  margin-left: 20%;
+}
+
 .navLink {
   text-decoration: none;
   color: white;

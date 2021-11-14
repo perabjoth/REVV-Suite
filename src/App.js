@@ -41,7 +41,6 @@ function App() {
                   <Tip />
                 </Grid>
               </Grid>
-              {/* <Tracks/> */}
               <Routes>
                 <Route exact path="/" element={<Home />} />
               </Routes>
@@ -50,6 +49,9 @@ function App() {
               </Routes>
               <Routes>
                 <Route path="/Rewards" element={<Transactions />} />
+              </Routes>
+              <Routes>
+                <Route path="/Tracks" element={<Tracks />} />
               </Routes>
             </Container>
           </Box>

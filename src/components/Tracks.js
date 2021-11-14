@@ -1,24 +1,61 @@
 import React, { Component } from 'react'
 
 import Grid from '@material-ui/core/Grid';
+import Card from '@material-ui/core/Card';
+import CardMedia from '@material-ui/core/CardMedia';
+import CardContent from '@material-ui/core/CardContent';
+
 
 function importAll(r) {
     return r.keys().map(r);
 }
 
-const tracks = importAll(require.context('../img/tracks', false, /\.(png|jpe?g|svg)$/));
+const tracks = importAll(require.context('../img/tracks', true, /\.(png|jpe?g|svg)$/));
 
 export default class Tracks extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            tracks: tracks,
+        }
+    }
+
+    componentDidMount() {
+        let tracksWithDimensions = JSON.parse(JSON.stringify(this.state.tracks));
+        tracksWithDimensions.forEach(track => {
+            let height = 0
+            let width = 0
+            let img = new Image()
+            img.onload = function () {
+                height = img.height
+                width = img.width
+                track.height = height
+                track.width = width
+            }
+
+            img.src = track.default
+        });
+
+        this.setState({
+            tracks: tracksWithDimensions
+        })
+
+    }
 
     render() {
-        console.log(tracks)
+        
+
         return (
             <Grid container spacing={3} >
                 {
-                    tracks.map((track) => {
+                    this.state.tracks.map((track) => {
                         return <Grid item xs={12}>
-                            <img src={track.default} />
-
+                            <Card>
+                                <CardMedia className="track" style={{ width: track.width.toString() + "px", height: track.height.toString() + "px" }} image={track.default} />
+                                <CardContent>
+                                    {track.default.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, "").replace(/\.[^/.]+$/, "")}
+                                </CardContent>
+                            </Card>
                         </Grid>
                     })
                 }

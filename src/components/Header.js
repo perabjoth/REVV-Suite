@@ -12,6 +12,7 @@ import Avatar from '@material-ui/core/Avatar';
 import REVVlogo from '../img/REVV_logo.gif';
 import FormatListNumberedIcon from '@material-ui/icons/FormatListNumbered';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
+import FlagIcon from '@material-ui/icons/Flag';
 import Home from '@material-ui/icons/Home';
 
 
@@ -39,6 +40,15 @@ function RewardLink() {
         <AccountBalanceWalletIcon style={{ marginTop: "4px" }} />
         <Typography variant="h5" noWrap component="div"  >
             Rewards
+        </Typography>
+    </NavLink>
+}
+
+function TrackLink() {
+    return <NavLink className="navLink" to="/Tracks">
+        <FlagIcon style={{ marginTop: "4px" }} />
+        <Typography variant="h5" noWrap component="div"  >
+            Tracks
         </Typography>
     </NavLink>
 }
@@ -73,6 +83,7 @@ export default function Header() {
                     <HomeLink />
                     <LeaderboardLink />
                     <RewardLink />
+                    <TrackLink/>
                 </div>}
                 {isMobile && <div> 
                     <IconButton
@@ -95,6 +106,7 @@ export default function Header() {
                         <MenuItem onClick={handleClose} ><HomeLink /></MenuItem>
                         <MenuItem onClick={handleClose}><LeaderboardLink /></MenuItem>
                         <MenuItem onClick={handleClose}><RewardLink /></MenuItem>
+                        <MenuItem onClick={handleClose}><TrackLink/></MenuItem>
                     </Menu>
                 </div>
                 }

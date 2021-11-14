@@ -61,7 +61,7 @@ export default class YoutubeSearch extends Component {
     }
 
     componentDidMount() {
-        // this.searchYoutube();
+        this.searchYoutube();
     }
 
     render() {
