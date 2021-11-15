@@ -1,10 +1,12 @@
-from genericpath import exists
+from pymongo import MongoClient
 import requests
-import os.path
-import json
 import os
+import ssl
+from dotenv import load_dotenv
+load_dotenv()
 
-
+client = MongoClient(os.environ.get("mongo-db"), ssl_cert_reqs=ssl.CERT_NONE)
+db = client['revv']
 
 events = "https://events-api.revvracing.com/"
 session = "https://game-session-api.revvracing.com/v1.0/game/count/"
@@ -12,19 +14,23 @@ leaderBoard = "https://namedleaderboard-api.revvracing.com/v2/"
 leaderBoardSuffix = "?limit=100000&offset=0"
 eventData = requests.get(events)
 eventData = eventData.json()
-with open(os.path.dirname(__file__)+'\\data\\events.json', 'w') as f:
-    json.dump(eventData, f)
+mongoEvents = db['events']
+mongoLeaderboard = db['leaderboards']
+mongoSession = db['sessions']
+
+mongoEvents.delete_many({})
+mongoEvents.insert_many(eventData)
 
 
 def get_Leaderboard(leaderboardName):
-    leaderboardDataPath = os.path.dirname(
-        __file__)+'\\data\\leaderboardData\\'+leaderboardName+'.json'
-    if(not exists(leaderboardDataPath)):
+    if(mongoLeaderboard.count_documents({'leaderboard_id': leaderboardName}) == 0):
         leaderboardData = requests.get(
             leaderBoard+leaderboardName+leaderBoardSuffix)
         leaderboardData = leaderboardData.json()
-        with open(leaderboardDataPath, 'w') as l:
-            json.dump(leaderboardData, l)
+        print(leaderboardName+' retrieved data')
+        leaderboardData['leaderboard_id'] = leaderboardName
+        print(leaderboardName)
+        mongoLeaderboard.insert_one(leaderboardData)
 
 
 for event in eventData:
@@ -42,10 +48,10 @@ for event in eventData:
     else:
         get_Leaderboard(leaderboardTitle)
 
-    sessionDataPath = os.path.dirname(__file__)+'\\data\\sessionData\\'+eventID+'.json'
-    if(not exists(sessionDataPath)):
+    if(mongoSession.count_documents({'session_id': eventID}) == 0):
+        print(eventID)
         sessionData = requests.get(session+eventID)
         sessionData = sessionData.json()
+        sessionData['session_id'] = eventID
         if(sessionData['total'] > 0):
-            with open(sessionDataPath, 'w') as s:
-                json.dump(sessionData,s)
+            mongoSession.insert_one(sessionData)
