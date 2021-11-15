@@ -2,6 +2,9 @@ from genericpath import exists
 import requests
 import os.path
 import json
+import os
+
+
 
 events = "https://events-api.revvracing.com/"
 session = "https://game-session-api.revvracing.com/v1.0/game/count/"
