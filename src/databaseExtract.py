@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import requests
 import os
 import ssl
+import json
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -14,12 +15,21 @@ leaderBoard = "https://namedleaderboard-api.revvracing.com/v2/"
 leaderBoardSuffix = "?limit=100000&offset=0"
 eventData = requests.get(events)
 eventData = eventData.json()
+
+
+def stringify_json(jsonData):
+    return json.loads(json.dumps(jsonData), parse_int=str)
+
+
 mongoEvents = db['events']
 mongoLeaderboard = db['leaderboards']
 mongoSession = db['sessions']
 
 mongoEvents.delete_many({})
-mongoEvents.insert_many(eventData)
+mongoEvents.insert_many(stringify_json(eventData),
+                        ordered=0, bypass_document_validation=1)
+
+leaderBoardArray = []
 
 
 def get_Leaderboard(leaderboardName):
@@ -30,8 +40,10 @@ def get_Leaderboard(leaderboardName):
         print(leaderboardName+' retrieved data')
         leaderboardData['leaderboard_id'] = leaderboardName
         print(leaderboardName)
-        mongoLeaderboard.insert_one(leaderboardData)
+        leaderBoardArray.append(leaderboardData)
 
+
+sessionArray = []
 
 for event in eventData:
     eventID = event.get('id').upper()
@@ -54,4 +66,9 @@ for event in eventData:
         sessionData = sessionData.json()
         sessionData['session_id'] = eventID
         if(sessionData['total'] > 0):
-            mongoSession.insert_one(sessionData)
+            sessionArray.append(sessionData)
+
+mongoLeaderboard.insert_many(stringify_json(
+    leaderBoardArray), ordered=0, bypass_document_validation=1)
+mongoSession.insert_many(stringify_json(sessionArray),
+                         ordered=0, bypass_document_validation=1)
