@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 import MaterialTable from '@material-table/core';
 import { forwardRef } from 'react';
-import events from '../data/events.json';
 import CoingeckoPrice from '../api/CoingeckoPrice';
+import revvData from '../api/revvData';
 import Popup from 'reactjs-popup';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -39,26 +39,6 @@ import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
 
-const sessionContext = require.context('../data/sessionData', true, /.json$/);
-const allSessions = {};
-sessionContext.keys().forEach((key) => {
-    const fileName = key.replace('./', '');
-    const resource = require(`../data/sessionData/${fileName}`);
-    const namespace = fileName.replace('.json', '');
-    allSessions[namespace] = JSON.parse(JSON.stringify(resource));
-
-});
-
-const leaderboardContext = require.context('../data/leaderboardData', true, /.json$/);
-const allleaderboards = {};
-leaderboardContext.keys().forEach((key) => {
-    const fileName = key.replace('./', '');
-    const resource = require(`../data/leaderboardData/${fileName}`);
-    const namespace = fileName.replace('.json', '');
-    allleaderboards[namespace] = JSON.parse(JSON.stringify(resource));
-
-});
-
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
     Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
@@ -79,6 +59,16 @@ const tableIcons = {
     ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
 };
 
+function getArrayValue(array, field, value) {
+    let result = array.filter((item) => {
+        return item[field] === value
+    })
+    if (result.length > 0) {
+        return result[0]
+    }
+    return undefined
+}
+
 function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio) {
     let prizeTable = <div></div>
     let unit = "$"
@@ -86,7 +76,6 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
         unit = "REVV"
     }
     let prizeTotal = totalPrizeString.replace(/\D/g, '');
-
     if (prizeData && prizeData.total > 0) {
         let totalDrivers = prizeData.total
         let hiredDrivers = prizeData.hired
@@ -202,8 +191,12 @@ class Prizes extends Component {
     getPrizeData = async () => {
         let prizeData;
         let sessionID = this.props.eventData.id.toUpperCase();
-        prizeData = allSessions[sessionID]
-        this.setPrizeData(prizeData);
+        await revvData.get('prizes', { params: { sessionID: sessionID } }).then((response) => {
+            prizeData = response.data[0]
+            this.setPrizeData(prizeData);
+        }).catch((e) => {
+            console.error(e)
+        })
     }
 
     componentDidMount() {
@@ -283,8 +276,8 @@ const columns = [
 
 function formatEventData(eventData) {
     eventData.map(singleDataPoint => {
-        singleDataPoint.startTimestamp = new Date(singleDataPoint.startTimestamp)
-        singleDataPoint.endTimestamp = new Date(singleDataPoint.endTimestamp)
+        singleDataPoint.startTimestamp = new Date(parseFloat(singleDataPoint.startTimestamp))
+        singleDataPoint.endTimestamp = new Date(parseFloat(singleDataPoint.endTimestamp))
         if (singleDataPoint.data.prize_total.toString().includes("REVV")) {
             singleDataPoint.data.prize_total_formatted = singleDataPoint.data.prize_total
         } else {
@@ -327,10 +320,15 @@ export default class Leaderboard extends Component {
     }
 
     BasicTable = async () => {
-        let eventData = events
-        eventData = formatEventData(eventData);
-        this.setEventData(eventData);
-        this.setEventDataLoaded(true);
+        let eventData
+        await revvData.get('events').then((response) => {
+            eventData = response.data
+            eventData = formatEventData(eventData);
+            this.setEventData(eventData);
+            this.setEventDataLoaded(true);
+        }).catch((e) => {
+            console.error(e)
+        })
     };
 
     componentDidMount() {
@@ -387,7 +385,7 @@ export default class Leaderboard extends Component {
             });
     }
 
-    setWalletPosition(walletPositions) {
+    setWalletPosition = async (walletPositions) => {
         this.setState({ walletPositions: walletPositions })
         let columnsDeepCopy = JSON.parse(JSON.stringify(this.state.columns));
         columnsDeepCopy = columnsDeepCopy.filter(function (obj) {
@@ -414,19 +412,28 @@ export default class Leaderboard extends Component {
         let participatedREVVCount = 0.0
 
         let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
+        let allSessions
+        await revvData.get('prizes').then((response) => {
+            allSessions = response.data
+        }).catch((e) => {
+            console.error(e)
+        })
+
         eventDeepCopy.forEach(event => {
             event.REVVReward = 0.0
             event.dollarReward = 0.0
             event.rank = 0
-            if (allSessions[event.id.toUpperCase()] && walletPositions[event.id]) {
+            let currentSession = getArrayValue(allSessions, "session_id", event.id.toUpperCase())
+            if (currentSession && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
-                let currentRank = currentWalletPosition.rank
+                let currentRank = parseInt(currentWalletPosition.rank)
                 event.rank = currentRank
-                generatePrizeTable(allSessions[event.id.toUpperCase()],
+                generatePrizeTable(currentSession,
                     event.data.prize,
                     event.data.splitLeaderboard,
                     event.data.prize_total.toString(),
                     event.data.dynamicPrizePoolRatio)
+
                 let prize = event.data.prize
                 let walletPrize = undefined
                 for (let index = 0; index < prize.length; index++) {
@@ -435,7 +442,7 @@ export default class Leaderboard extends Component {
                     if (nextIndex === prize.length) {
                         walletPrize = prizeRank
                         break;
-                    } else if (currentRank >= prizeRank.rank && currentRank < prize[nextIndex].rank) {
+                    } else if (currentRank >= parseInt(prizeRank.rank) && currentRank < parseInt(prize[nextIndex].rank)) {
                         walletPrize = prizeRank
                         break;
                     }
@@ -482,16 +489,18 @@ export default class Leaderboard extends Component {
         })
     }
 
-    getWalletPositions() {
+    getWalletPositions = async () => {
         this.setEventDataLoaded(false)
         let walletPositions = {};
-        events.forEach(event => {
+        let allleaderboards = await revvData.get('leaderboards')
+        allleaderboards = allleaderboards.data
+        this.state.eventData.forEach(event => {
             let leaderboardPrefix = 'GAME_SESSION_ALPHA_A_'
             if (event.data.splitLeaderboard) {
                 let ownerLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_OWNER'
                 let hiredLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_HIRED'
-                let ownerLeaderboardData = allleaderboards[ownerLeaderboard]
-                let hiredLeaderboardData = allleaderboards[hiredLeaderboard]
+                let ownerLeaderboardData = getArrayValue(allleaderboards, 'leaderboard_id', ownerLeaderboard)
+                let hiredLeaderboardData = getArrayValue(allleaderboards, 'leaderboard_id', hiredLeaderboard)
                 let ownerEntry = this.getWalletEntry(ownerLeaderboardData, true, false, true)
                 let hiredEntry = this.getWalletEntry(hiredLeaderboardData, false, true, true)
                 if (ownerEntry) {
@@ -501,14 +510,14 @@ export default class Leaderboard extends Component {
                 }
             } else {
                 let leaderboard = leaderboardPrefix + event.id.toUpperCase()
-                let ownerEntry = this.getWalletEntry(allleaderboards[leaderboard], true, false, false)
+                let ownerEntry = this.getWalletEntry(getArrayValue(allleaderboards, 'leaderboard_id', leaderboard), true, false, false)
                 if (ownerEntry) {
                     walletPositions[event.id] = ownerEntry
                 }
             }
         });
 
-        this.setWalletPosition(walletPositions)
+        await this.setWalletPosition(walletPositions)
     }
 
     setAverages(averageREVV, averageRank) {

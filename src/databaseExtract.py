@@ -18,7 +18,7 @@ eventData = eventData.json()
 
 
 def stringify_json(jsonData):
-    return json.loads(json.dumps(jsonData), parse_int=str)
+    return json.loads(json.dumps(jsonData), parse_int=str, parse_float=str)
 
 
 mongoEvents = db['events']
@@ -27,7 +27,7 @@ mongoSession = db['sessions']
 
 mongoEvents.delete_many({})
 mongoEvents.insert_many(stringify_json(eventData),
-                        ordered=0, bypass_document_validation=1)
+                        ordered=False, bypass_document_validation=True)
 
 leaderBoardArray = []
 
@@ -69,6 +69,6 @@ for event in eventData:
             sessionArray.append(sessionData)
 
 mongoLeaderboard.insert_many(stringify_json(
-    leaderBoardArray), ordered=0, bypass_document_validation=1)
+    leaderBoardArray), ordered=False, bypass_document_validation=True)
 mongoSession.insert_many(stringify_json(sessionArray),
-                         ordered=0, bypass_document_validation=1)
+                         ordered=False, bypass_document_validation=True)
