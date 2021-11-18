@@ -23,6 +23,7 @@ def stringify_json(jsonData):
 
 mongoEvents = db['events']
 mongoLeaderboard = db['leaderboards']
+mongoWalletPositions = db['walletPositions']
 mongoSession = db['sessions']
 
 mongoEvents.delete_many({})
@@ -30,17 +31,24 @@ mongoEvents.insert_many(stringify_json(eventData),
                         ordered=False, bypass_document_validation=True)
 
 leaderBoardArray = []
+walletPositions = []
 
 
 def get_Leaderboard(leaderboardName):
+    print(leaderboardName)
     if(mongoLeaderboard.count_documents({'leaderboard_id': leaderboardName}) == 0):
         leaderboardData = requests.get(
             leaderBoard+leaderboardName+leaderBoardSuffix)
         leaderboardData = leaderboardData.json()
-        print(leaderboardName+' retrieved data')
+        currentWalletPositions = leaderboardData['entries']
+        for position in currentWalletPositions:
+            position['leaderboard_id'] = leaderboardName
+            position['wallet'] = position['wallet'].upper()
+
+        walletPositions.extend(currentWalletPositions)
         leaderboardData['leaderboard_id'] = leaderboardName
-        print(leaderboardName)
-        leaderBoardArray.append(leaderboardData)
+
+        leaderBoardArray.append({'leaderboard_id': leaderboardName})
 
 
 sessionArray = []
@@ -72,3 +80,5 @@ mongoLeaderboard.insert_many(stringify_json(
     leaderBoardArray), ordered=False, bypass_document_validation=True)
 mongoSession.insert_many(stringify_json(sessionArray),
                          ordered=False, bypass_document_validation=True)
+mongoWalletPositions.insert_many(stringify_json(walletPositions),
+                                 ordered=False, bypass_document_validation=True)

@@ -352,22 +352,6 @@ export default class Leaderboard extends Component {
         return entry.wallet === this.walletAddress
     }
 
-    getWalletEntry(currentLeaderboard, owner, hired, split, eventId) {
-        let driverEntry = undefined
-        if (currentLeaderboard) {
-            driverEntry = currentLeaderboard.entries.filter((entry) => entry.wallet.toUpperCase() === this.state.walletAddress.toUpperCase())
-            if (driverEntry.length > 0) {
-                driverEntry = driverEntry[0]
-                driverEntry.owner = owner
-                driverEntry.hired = hired
-                driverEntry.split = split
-                return driverEntry
-            }
-        }
-
-        return undefined
-    }
-
     setREVVPrice(REVVPrice) {
         this.setState({
             REVVPrice: REVVPrice
@@ -451,7 +435,7 @@ export default class Leaderboard extends Component {
                 event.unit = "REVV"
                 if (walletPrize) {
                     let finalPrize = ''
-                    if (currentWalletPosition.split) {
+                    if (currentWalletPosition.leaderboard_id.includes("SPLIT")) {
                         finalPrize = currentWalletPosition.hired ? walletPrize.hiredPrize : walletPrize.ownerPrize
                     } else {
                         finalPrize = walletPrize.prize
@@ -492,17 +476,16 @@ export default class Leaderboard extends Component {
     getWalletPositions = async () => {
         this.setEventDataLoaded(false)
         let walletPositions = {};
-        let allleaderboards = await revvData.get('leaderboards')
+        let allleaderboards = await revvData.get('walletPositions', { params: { walletAddress: this.state.walletAddress.toUpperCase() } })
         allleaderboards = allleaderboards.data
         this.state.eventData.forEach(event => {
             let leaderboardPrefix = 'GAME_SESSION_ALPHA_A_'
             if (event.data.splitLeaderboard) {
                 let ownerLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_OWNER'
                 let hiredLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_HIRED'
-                let ownerLeaderboardData = getArrayValue(allleaderboards, 'leaderboard_id', ownerLeaderboard)
-                let hiredLeaderboardData = getArrayValue(allleaderboards, 'leaderboard_id', hiredLeaderboard)
-                let ownerEntry = this.getWalletEntry(ownerLeaderboardData, true, false, true)
-                let hiredEntry = this.getWalletEntry(hiredLeaderboardData, false, true, true)
+                let ownerEntry = getArrayValue(allleaderboards, 'leaderboard_id', ownerLeaderboard)
+                let hiredEntry = getArrayValue(allleaderboards, 'leaderboard_id', hiredLeaderboard)
+                
                 if (ownerEntry) {
                     walletPositions[event.id] = ownerEntry
                 } else if (hiredEntry) {
@@ -510,7 +493,7 @@ export default class Leaderboard extends Component {
                 }
             } else {
                 let leaderboard = leaderboardPrefix + event.id.toUpperCase()
-                let ownerEntry = this.getWalletEntry(getArrayValue(allleaderboards, 'leaderboard_id', leaderboard), true, false, false)
+                let ownerEntry = getArrayValue(allleaderboards, 'leaderboard_id', leaderboard)
                 if (ownerEntry) {
                     walletPositions[event.id] = ownerEntry
                 }
