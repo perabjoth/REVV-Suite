@@ -75,10 +75,12 @@ for event in eventData:
         sessionData['session_id'] = eventID
         if(sessionData['total'] > 0):
             sessionArray.append(sessionData)
-
-mongoLeaderboard.insert_many(stringify_json(
-    leaderBoardArray), ordered=False, bypass_document_validation=True)
-mongoSession.insert_many(stringify_json(sessionArray),
-                         ordered=False, bypass_document_validation=True)
-mongoWalletPositions.insert_many(stringify_json(walletPositions),
-                                 ordered=False, bypass_document_validation=True)
+if(len(leaderBoardArray) > 0):
+    mongoLeaderboard.insert_many(stringify_json(
+        leaderBoardArray), ordered=False, bypass_document_validation=True)
+if(len(sessionArray) > 0):
+    mongoSession.insert_many(stringify_json(sessionArray),
+                             ordered=False, bypass_document_validation=True)
+if(len(walletPositions) > 0):
+    mongoWalletPositions.insert_many(stringify_json(walletPositions),
+                                     ordered=False, bypass_document_validation=True)
