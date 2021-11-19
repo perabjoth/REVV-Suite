@@ -286,6 +286,8 @@ function formatEventData(eventData) {
         return singleDataPoint
     })
 
+    eventData =  eventData.filter(singleDataPoint=> {return !singleDataPoint.data.practice})
+
     eventData.sort(function (a, b) {
         return new Date(b.startTimestamp) - new Date(a.startTimestamp);
     });
@@ -489,6 +491,7 @@ export default class Leaderboard extends Component {
                 if (ownerEntry) {
                     walletPositions[event.id] = ownerEntry
                 } else if (hiredEntry) {
+                    hiredEntry.hired = true
                     walletPositions[event.id] = hiredEntry
                 }
             } else {
