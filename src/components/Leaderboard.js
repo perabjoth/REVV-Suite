@@ -286,7 +286,7 @@ function formatEventData(eventData) {
         return singleDataPoint
     })
 
-    eventData =  eventData.filter(singleDataPoint=> {return !singleDataPoint.data.practice})
+    eventData = eventData.filter(singleDataPoint => { return !singleDataPoint.data.practice })
 
     eventData.sort(function (a, b) {
         return new Date(b.startTimestamp) - new Date(a.startTimestamp);
@@ -380,8 +380,9 @@ export default class Leaderboard extends Component {
 
         let newColumns = [
             { title: "Rank", field: "rank", filterPlaceholder: 'Filter Rank' },
-            { title: "REVV", field: "REVVReward", filterPlaceholder: 'Filter REVV' },
-            // { title: "Dollar", field: "dollarReward", filterPlaceholder: 'Filter Dollars' },
+            {
+                title: "REVV", field: "RewardString", filterPlaceholder: 'Filter REVV'
+            },
         ]
 
         columnsDeepCopy.splice(2, 0, ...newColumns)
@@ -446,12 +447,14 @@ export default class Leaderboard extends Component {
                     if (walletPrize.unit === "REVV") {
                         participatedREVVCount += 1.0
                         event.REVVReward += parseFloat(finalPrize)
+                        event.RewardString = event.REVVReward.toString()+" REVV"
                         totalREVV += parseFloat(finalPrize)
                         totalRank += currentRank
                     } else {
                         event.unit = "$"
                         event.dollarReward += parseFloat(finalPrize)
                         totalDollars += parseFloat(finalPrize)
+                        event.RewardString = event.dollarReward.toString()+" $"
                     }
                 }
             }
@@ -487,7 +490,7 @@ export default class Leaderboard extends Component {
                 let hiredLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_HIRED'
                 let ownerEntry = getArrayValue(allleaderboards, 'leaderboard_id', ownerLeaderboard)
                 let hiredEntry = getArrayValue(allleaderboards, 'leaderboard_id', hiredLeaderboard)
-                
+
                 if (ownerEntry) {
                     walletPositions[event.id] = ownerEntry
                 } else if (hiredEntry) {
