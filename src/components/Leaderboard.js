@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types';
-import MaterialTable from '@material-table/core';
+import MaterialTable from 'material-table';
 import { forwardRef } from 'react';
 import CoingeckoPrice from '../api/CoingeckoPrice';
 import revvData from '../api/revvData';
@@ -658,6 +658,9 @@ export default class Leaderboard extends Component {
                             pageSizeOptions: [5, 10, 20, { value: this.state.eventData ? parseInt(this.state.eventData.length) : 100, label: 'All' }],
                             filtering: true,
                             selection: true,
+                            search: false,
+                            toolbar: true,
+                            grouping: true,
                             exportButton: true
 
                         }}
