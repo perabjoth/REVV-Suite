@@ -665,6 +665,7 @@ export default class Leaderboard extends Component {
                             let totalDollars = 0.0
                             let totalRank = 0.0
                             let participatedREVVCount = 0.0
+                            let totalTries = 0.0
 
                             if (rows.length === 0) {
                                 rows = this.state.eventData
@@ -676,16 +677,17 @@ export default class Leaderboard extends Component {
                                 if (row.unit === "REVV") {
                                     totalRank += parseFloat(row.rank)
                                     participatedREVVCount += 1.0
+                                    totalTries += row.tries
                                 }
                             });
 
                             if (totalRank > 0 && totalREVV > 0) {
-                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount)
+                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries/participatedREVVCount)
                             } else {
                                 this.setAverages(0, 0)
                             }
 
-                            this.setTotalPrizes(totalREVV, totalDollars)
+                            this.setTotalPrizes(totalREVV, totalDollars, totalTries)
                         }}
                     />
                 </Grid>
