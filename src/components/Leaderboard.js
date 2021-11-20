@@ -401,6 +401,7 @@ export default class Leaderboard extends Component {
         let totalDollars = 0.0
         let totalRank = 0.0
         let participatedREVVCount = 0.0
+        let paidTriesCount = 0.0
         let totalTries = 0.0
 
         let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
@@ -457,6 +458,9 @@ export default class Leaderboard extends Component {
                     if (walletPrize.unit === "REVV") {
                         event.tries = tryCount
                         totalTries += parseFloat(tryCount)
+                        if (tryCount > 0) {
+                            paidTriesCount += 1.0
+                        }
                         participatedREVVCount += 1.0
                         event.REVVReward += parseFloat(finalPrize)
                         event.RewardString = event.REVVReward.toString() + " REVV"
@@ -474,7 +478,7 @@ export default class Leaderboard extends Component {
         });
 
         if (totalRank > 0 && totalREVV > 0) {
-            this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / participatedREVVCount)
+            this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / paidTriesCount)
         } else {
             this.setAverages(0, 0)
         }
@@ -669,6 +673,7 @@ export default class Leaderboard extends Component {
                             let totalDollars = 0.0
                             let totalRank = 0.0
                             let participatedREVVCount = 0.0
+                            let paidTriesCount = 0.0
                             let totalTries = 0.0
 
                             if (rows.length === 0) {
@@ -682,11 +687,14 @@ export default class Leaderboard extends Component {
                                     totalRank += parseFloat(row.rank)
                                     participatedREVVCount += 1.0
                                     totalTries += row.tries
+                                    if (row.tries && row.tries > 0) {
+                                        paidTriesCount += 1.0
+                                    }
                                 }
                             });
 
                             if (totalRank > 0 && totalREVV > 0) {
-                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / participatedREVVCount)
+                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / paidTriesCount)
                             } else {
                                 this.setAverages(0, 0)
                             }
