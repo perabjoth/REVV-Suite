@@ -389,7 +389,6 @@ export default class Leaderboard extends Component {
         columnsDeepCopy[2].hidden = false
         columnsDeepCopy[3].hidden = false
         columnsDeepCopy[4].hidden = false
-        columnsDeepCopy[5].hidden = true
 
         this.setState({
             columns: columnsDeepCopy
