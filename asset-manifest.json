@@ -5,8 +5,8 @@
     "main.css": "/REVV-Suite/static/css/main.011a45fc.chunk.css",
     "main.js": "/REVV-Suite/static/js/main.d0523ae0.chunk.js",
     "main.js.map": "/REVV-Suite/static/js/main.d0523ae0.chunk.js.map",
-    "runtime-main.js": "/REVV-Suite/static/js/runtime-main.4806de91.js",
-    "runtime-main.js.map": "/REVV-Suite/static/js/runtime-main.4806de91.js.map",
+    "runtime-main.js": "/REVV-Suite/static/js/runtime-main.94de863a.js",
+    "runtime-main.js.map": "/REVV-Suite/static/js/runtime-main.94de863a.js.map",
     "static/js/3.291f13ad.chunk.js": "/REVV-Suite/static/js/3.291f13ad.chunk.js",
     "static/js/3.291f13ad.chunk.js.map": "/REVV-Suite/static/js/3.291f13ad.chunk.js.map",
     "static/js/4.8e6acac5.chunk.js": "/REVV-Suite/static/js/4.8e6acac5.chunk.js",
@@ -15,8 +15,8 @@
     "static/js/5.877cd546.chunk.js.map": "/REVV-Suite/static/js/5.877cd546.chunk.js.map",
     "static/js/6.92d8d022.chunk.js": "/REVV-Suite/static/js/6.92d8d022.chunk.js",
     "static/js/6.92d8d022.chunk.js.map": "/REVV-Suite/static/js/6.92d8d022.chunk.js.map",
-    "static/js/7.9e0c820f.chunk.js": "/REVV-Suite/static/js/7.9e0c820f.chunk.js",
-    "static/js/7.9e0c820f.chunk.js.map": "/REVV-Suite/static/js/7.9e0c820f.chunk.js.map",
+    "static/js/7.c00c4545.chunk.js": "/REVV-Suite/static/js/7.c00c4545.chunk.js",
+    "static/js/7.c00c4545.chunk.js.map": "/REVV-Suite/static/js/7.c00c4545.chunk.js.map",
     "static/js/8.9741700b.chunk.js": "/REVV-Suite/static/js/8.9741700b.chunk.js",
     "static/js/8.9741700b.chunk.js.map": "/REVV-Suite/static/js/8.9741700b.chunk.js.map",
     "static/js/9.a8df9ee8.chunk.js": "/REVV-Suite/static/js/9.a8df9ee8.chunk.js",
@@ -35,7 +35,7 @@
     "static/media/REVV_logo.d63df005.png": "/REVV-Suite/static/media/REVV_logo.d63df005.png"
   },
   "entrypoints": [
-    "static/js/runtime-main.4806de91.js",
+    "static/js/runtime-main.94de863a.js",
     "static/js/4.8e6acac5.chunk.js",
     "static/css/main.011a45fc.chunk.css",
     "static/js/main.d0523ae0.chunk.js"
