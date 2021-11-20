@@ -4,6 +4,7 @@ import MaterialTable from '@material-table/core';
 import { forwardRef } from 'react';
 import CoingeckoPrice from '../api/CoingeckoPrice';
 import revvData from '../api/revvData';
+import revvTransactions from '../api/revvTransactions'
 import Popup from 'reactjs-popup';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -240,6 +241,9 @@ BootstrapDialogTitle.propTypes = {
 const columns = [
     { title: "Series", field: "data.series", hidden: true },
     { title: "Name", field: "data.name", filterPlaceholder: 'Filter Name' },
+    { title: "Rank", field: "rank", filterPlaceholder: 'Filter Rank', hidden: true },
+    { title: "REVV", field: "RewardString", filterPlaceholder: 'Filter REVV', hidden: true },
+    { title: "Tries", field: "tries", filterPlaceholder: 'Filter Tries', hidden: true },
     {
         title: "View Pizes", field: "", render: rowData => {
             if (new Date(rowData.endTimestamp).getTime() < new Date().getTime()) {
@@ -307,9 +311,11 @@ export default class Leaderboard extends Component {
             columns: columns,
             totalREVV: undefined,
             totalDollars: undefined,
+            totalTries: undefined,
             REVVPrice: 0.0,
             averageRank: 0.0,
-            averageREVV: 0.0
+            averageREVV: 0.0,
+            averageTries: 0.0
         };
     }
 
@@ -344,9 +350,11 @@ export default class Leaderboard extends Component {
             columns: columns,
             totalREVV: undefined,
             totalDollars: undefined,
+            totalTries: undefined,
             REVVPrice: 0.0,
             averageRank: 0.0,
-            averageREVV: 0.0
+            averageREVV: 0.0,
+            averageTries: 0.0
         })
     }
 
@@ -371,21 +379,17 @@ export default class Leaderboard extends Component {
             });
     }
 
-    setWalletPosition = async (walletPositions) => {
+    setWalletPosition = async (walletPositions, walletTransactions) => {
         this.setState({ walletPositions: walletPositions })
         let columnsDeepCopy = JSON.parse(JSON.stringify(this.state.columns));
         columnsDeepCopy = columnsDeepCopy.filter(function (obj) {
             return obj.field !== '';
         });
 
-        let newColumns = [
-            { title: "Rank", field: "rank", filterPlaceholder: 'Filter Rank' },
-            {
-                title: "REVV", field: "RewardString", filterPlaceholder: 'Filter REVV'
-            },
-        ]
-
-        columnsDeepCopy.splice(2, 0, ...newColumns)
+        columnsDeepCopy[2].hidden = false
+        columnsDeepCopy[3].hidden = false
+        columnsDeepCopy[4].hidden = false
+        columnsDeepCopy[5].hidden = true
 
         this.setState({
             columns: columnsDeepCopy
@@ -397,6 +401,7 @@ export default class Leaderboard extends Component {
         let totalDollars = 0.0
         let totalRank = 0.0
         let participatedREVVCount = 0.0
+        let totalTries = 0.0
 
         let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
         let allSessions
@@ -410,6 +415,11 @@ export default class Leaderboard extends Component {
             event.REVVReward = 0.0
             event.dollarReward = 0.0
             event.rank = 0
+            let tryCount = walletTransactions.reduce(function (n, val) {
+                return n + (new Date(val.timeStamp) >= new Date(event.startTimestamp) && new Date(val.timeStamp) <= new Date(event.endTimestamp));
+            }, 0);
+
+
             let currentSession = getArrayValue(allSessions, "session_id", event.id.toUpperCase())
             if (currentSession && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
@@ -445,36 +455,40 @@ export default class Leaderboard extends Component {
                     }
 
                     if (walletPrize.unit === "REVV") {
+                        event.tries = tryCount
+                        totalTries += parseFloat(tryCount)
                         participatedREVVCount += 1.0
                         event.REVVReward += parseFloat(finalPrize)
-                        event.RewardString = event.REVVReward.toString()+" REVV"
+                        event.RewardString = event.REVVReward.toString() + " REVV"
                         totalREVV += parseFloat(finalPrize)
                         totalRank += currentRank
                     } else {
                         event.unit = "$"
+                        event.tries = tryCount
                         event.dollarReward += parseFloat(finalPrize)
                         totalDollars += parseFloat(finalPrize)
-                        event.RewardString = event.dollarReward.toString()+" $"
+                        event.RewardString = event.dollarReward.toString() + " $"
                     }
                 }
             }
         });
 
         if (totalRank > 0 && totalREVV > 0) {
-            this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount)
+            this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / participatedREVVCount)
         } else {
             this.setAverages(0, 0)
         }
 
-        this.setTotalPrizes(totalREVV, totalDollars)
+        this.setTotalPrizes(totalREVV, totalDollars, totalTries)
         this.setEventData(eventDeepCopy)
         this.setEventDataLoaded(true)
     }
 
-    setTotalPrizes(totalREVV, totalDollars) {
+    setTotalPrizes(totalREVV, totalDollars, totalTries) {
         this.setState({
             totalREVV: totalREVV,
-            totalDollars: totalDollars
+            totalDollars: totalDollars,
+            totalTries: totalTries,
         })
     }
 
@@ -506,13 +520,38 @@ export default class Leaderboard extends Component {
             }
         });
 
-        await this.setWalletPosition(walletPositions)
+        let txns
+        await revvTransactions
+            .get(`&address=${this.state.walletAddress}`)
+            .then((response) => {
+                txns = response.data.result
+                txns = this.filterTransactions(txns);
+            }).catch((e) => {
+                console.error(e);
+            });
+        await this.setWalletPosition(walletPositions, txns)
     }
 
-    setAverages(averageREVV, averageRank) {
+    filterTransactions(txns) {
+        txns = txns.filter((txn) => {
+            return txn.tokenSymbol === "REVV" && txn.to.toUpperCase() === "0x069895FdA566d0364ABEc6e290BeE3D565c55666".toUpperCase() &&
+                txn.value === "5000000000000000000";
+        });
+
+        txns = txns.map((txn) => {
+            txn.timeStamp = new Date(txn.timeStamp * 1000)
+            return txn;
+        })
+
+        return txns;
+    }
+
+
+    setAverages(averageREVV, averageRank, averageTries) {
         this.setState({
             averageREVV: averageREVV,
-            averageRank: averageRank
+            averageRank: averageRank,
+            averageTries: averageTries,
         })
     }
 
@@ -578,6 +617,29 @@ export default class Leaderboard extends Component {
                                 disabled
                                 fullWidth
                                 value={this.state.averageREVV.toFixed(2).toString() + " REVV" + (this.state.REVVPrice ? " (" + (this.state.REVVPrice * this.state.averageREVV).toFixed(2).toString() + " $)" : "")}
+                            />
+                        </Grid>
+                    </React.Fragment>
+                }{this.state.totalTries &&
+                    <React.Fragment>
+                        <Grid item md={6} xs={12} alignContent="center" alignItems="center">
+                            <TextField
+                                id="totalTries"
+                                label="Total Tries (New Prize Structure)"
+                                variant="outlined"
+                                disabled
+                                fullWidth
+                                value={this.state.totalTries.toFixed(0).toString() + " Tries" + (this.state.REVVPrice ? " (" + (this.state.totalTries * 5) + " REVV/" + (this.state.REVVPrice * this.state.totalTries * 5).toFixed(2).toString() + " $)" : "")}
+                            />
+                        </Grid>
+                        <Grid item md={6} xs={12} alignContent="center" alignItems="center">
+                            <TextField
+                                id="averageTries"
+                                label="Average Tries (New Prize Structure)"
+                                variant="outlined"
+                                disabled
+                                fullWidth
+                                value={this.state.averageTries.toFixed(0).toString() + " Tries" + (this.state.REVVPrice ? " (" + (this.state.averageTries * 5).toFixed(2) + " REVV/" + (this.state.REVVPrice * this.state.averageTries * 5).toFixed(2).toString() + " $)" : "")}
                             />
                         </Grid>
                     </React.Fragment>

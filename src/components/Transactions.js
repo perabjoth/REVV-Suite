@@ -7,7 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import Box from '@material-ui/core/Box';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
-import revvrewards from '../api/revvrewards';
+import revvTransactions from '../api/revvTransactions';
 import MaterialTable from '@material-table/core';
 import Grid from '@material-ui/core/Grid';
 import theme from './theme';
@@ -110,7 +110,7 @@ export default class Transactions extends Component {
                 this.setDataLoaded(true);
             } else {
                 this.setIsLoading(true);
-                await revvrewards
+                await revvTransactions
                     .get(`&address=${this.state.walletAddress}`)
                     .then((response) => {
                         let txns = response.data.result
