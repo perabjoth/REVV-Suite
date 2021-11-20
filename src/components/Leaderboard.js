@@ -657,8 +657,9 @@ export default class Leaderboard extends Component {
                             pageSize: 10,
                             pageSizeOptions: [5, 10, 20, { value: this.state.eventData ? parseInt(this.state.eventData.length) : 100, label: 'All' }],
                             filtering: true,
-                            search: false,
-                            selection: true
+                            selection: true,
+                            exportButton: true
+
                         }}
                         onSelectionChange={(rows) => {
                             let totalREVV = 0.0
@@ -682,7 +683,7 @@ export default class Leaderboard extends Component {
                             });
 
                             if (totalRank > 0 && totalREVV > 0) {
-                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries/participatedREVVCount)
+                                this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / participatedREVVCount)
                             } else {
                                 this.setAverages(0, 0)
                             }
