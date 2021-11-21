@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import requests
+from datetime import datetime
 import os
 import ssl
 import json
@@ -41,6 +42,10 @@ def get_Leaderboard(leaderboardName):
             leaderBoard+leaderboardName+leaderBoardSuffix)
         leaderboardData = leaderboardData.json()
         currentWalletPositions = leaderboardData['entries']
+        
+        if(len(currentWalletPositions)==0):
+            return
+
         for position in currentWalletPositions:
             position['leaderboard_id'] = leaderboardName
             position['wallet'] = position['wallet'].upper()
@@ -52,12 +57,21 @@ def get_Leaderboard(leaderboardName):
 
 
 sessionArray = []
-
 for event in eventData:
     eventID = event.get('id').upper()
     splitLeaderboard = event.get('data').get('splitLeaderboard')
     leaderboardTitle = "GAME_SESSION_ALPHA_A_" + eventID
+    endTimeStamp = event.get('endTimestamp')
+    endTimeStamp/=1000
+
+    if(endTimeStamp >= 32536799999 or datetime.fromtimestamp(endTimeStamp) > datetime.now()):
+        continue
+    
+    if(event.get('type').upper() == 'PRACTICE'):
+        continue
+
     if(event.get('active')):
+        print(event.get('type').upper())
         break
 
     if(splitLeaderboard):
@@ -75,6 +89,7 @@ for event in eventData:
         sessionData['session_id'] = eventID
         if(sessionData['total'] > 0):
             sessionArray.append(sessionData)
+
 if(len(leaderBoardArray) > 0):
     mongoLeaderboard.insert_many(stringify_json(
         leaderBoardArray), ordered=False, bypass_document_validation=True)

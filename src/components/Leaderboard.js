@@ -282,11 +282,12 @@ function formatEventData(eventData) {
     eventData.map(singleDataPoint => {
         singleDataPoint.startTimestamp = new Date(parseFloat(singleDataPoint.startTimestamp))
         singleDataPoint.endTimestamp = new Date(parseFloat(singleDataPoint.endTimestamp))
-        if (singleDataPoint.data.prize_total.toString().includes("REVV")) {
+        if (singleDataPoint.data.prize_total.toString().toUpperCase().includes("REVV")) {
             singleDataPoint.data.prize_total_formatted = singleDataPoint.data.prize_total
         } else {
             singleDataPoint.data.prize_total_formatted = singleDataPoint.data.prize_total.toString() + " $"
         }
+        
         return singleDataPoint
     })
 
