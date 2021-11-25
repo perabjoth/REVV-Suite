@@ -237,11 +237,17 @@ BootstrapDialogTitle.propTypes = {
     children: PropTypes.node,
     onClose: PropTypes.func.isRequired,
 };
+function millisToMinutesAndSeconds(millis) {
+    var minutes = Math.floor(millis / 60000);
+    var seconds = ((millis % 60000) / 1000).toFixed(3);
+    return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
 
 const columns = [
     { title: "Series", field: "data.series", hidden: true },
     { title: "Name", field: "data.name", filterPlaceholder: 'Filter Name' },
     { title: "Rank", field: "rank", filterPlaceholder: 'Filter Rank', hidden: true },
+    { title: "Time", field: "time", filterPlaceholder: 'Filter Time', hidden: true },
     { title: "REVV", field: "RewardString", filterPlaceholder: 'Filter REVV', hidden: true },
     { title: "Tries", field: "tries", filterPlaceholder: 'Filter Tries', hidden: true },
     {
@@ -287,7 +293,7 @@ function formatEventData(eventData) {
         } else {
             singleDataPoint.data.prize_total_formatted = singleDataPoint.data.prize_total.toString() + " $"
         }
-        
+
         return singleDataPoint
     })
 
@@ -390,6 +396,7 @@ export default class Leaderboard extends Component {
         columnsDeepCopy[2].hidden = false
         columnsDeepCopy[3].hidden = false
         columnsDeepCopy[4].hidden = false
+        columnsDeepCopy[5].hidden = false
 
         this.setState({
             columns: columnsDeepCopy
@@ -426,6 +433,7 @@ export default class Leaderboard extends Component {
                 let currentWalletPosition = walletPositions[event.id]
                 let currentRank = parseInt(currentWalletPosition.rank)
                 event.rank = currentRank
+                event.time = millisToMinutesAndSeconds(walletPositions[event.id].time)
                 generatePrizeTable(currentSession,
                     event.data.prize,
                     event.data.splitLeaderboard,
