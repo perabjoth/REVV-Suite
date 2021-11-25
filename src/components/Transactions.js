@@ -156,7 +156,7 @@ export default class Transactions extends Component {
                         Distributed REVV Rewards
                     </Typography>
                 </Grid>
-                <Grid item xs={12} component="form" onSubmit={(e) => { this.getTransactions(e) }} noValidate sx={{ mt: 3 }}>
+                <Grid item xs={12} component="form" onSubmit={(e) => { this.getTransactions(e) }} noValidate style={{ mt: 3 }}>
                     <TextField
                         margin="normal"
                         color="primary"
@@ -182,7 +182,7 @@ export default class Transactions extends Component {
                     {this.state.isLoading && <LinearProgress />}
                 </Grid>
                 {this.state.dataLoaded &&
-                    <Box sx={{
+                    <Box style={{
                         marginTop: 8,
                         display: 'contents',
                         height: '100vh',
