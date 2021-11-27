@@ -40,6 +40,9 @@ import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
 
+const leaderboardPrefix = 'GAME_SESSION_ALPHA_A_'
+const ownerSuffix = '_SPLIT_OWNER'
+const hiredSuffix = '_SPLIT_HIRED'
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
     Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
@@ -73,6 +76,7 @@ function getArrayValue(array, field, value) {
 function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio) {
     let prizeTable = <div></div>
     let unit = "$"
+
     if (totalPrizeString.toUpperCase().includes("REVV")) {
         unit = "REVV"
     }
@@ -93,19 +97,31 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
         let rankRange = false
         for (const i in prizeDistribution) {
             prizeDistribution[i].unit = unit
-            let peoplePerPrize = 1
+            let hiredPeoplePerPrize = 1
+            let ownerPeoplePerPrize = 1
             if (prizeDistribution[i].prize < 1 || halfSplit) {
                 if (i < prizeDistribution.length - 1) {
                     let j = parseInt(i) + 1
                     if (prizeDistribution[j].rank - prizeDistribution[i].rank > 1) {
                         rankRange = true
                         prizeDistribution[i].rankString = prizeDistribution[i].rank.toString() + ' - ' + (prizeDistribution[j].rank - 1).toString()
-                        peoplePerPrize = parseInt(prizeDistribution[j].rank) - parseInt(prizeDistribution[i].rank)
+                        hiredPeoplePerPrize = parseInt(prizeDistribution[j].rank) - parseInt(prizeDistribution[i].rank)
+                        ownerPeoplePerPrize = hiredPeoplePerPrize
                     }
                 } else {
                     if (rankRange) {
                         prizeDistribution[i].rankString = prizeDistribution[i].rank.toString() + '+*'
-                        peoplePerPrize = 3000
+                        if (hiredDrivers > prizeDistribution[i].rank) {
+                            hiredPeoplePerPrize = hiredDrivers - prizeDistribution[i].rank
+                        } else {
+                            hiredPeoplePerPrize = -1
+                        }
+
+                        if (ownerDrivers > prizeDistribution[i].rank) {
+                            ownerPeoplePerPrize = ownerDrivers - prizeDistribution[i].rank
+                        } else {
+                            ownerPeoplePerPrize = -1
+                        }
                     }
                 }
 
@@ -114,8 +130,17 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
                 }
 
                 let currentPrize = prizeDistribution[i].prize * (halfSplit ? 1 : prizeTotal)
-                prizeDistribution[i].hiredPrize = ((halfSplit ? 1 : hiredPercentage) * currentPrize / peoplePerPrize).toFixed(2)
-                prizeDistribution[i].ownerPrize = ((halfSplit ? 1 : ownerPercentage) * currentPrize / peoplePerPrize).toFixed(2)
+                if (hiredPeoplePerPrize !== -1) {
+                    prizeDistribution[i].hiredPrize = ((halfSplit ? 1 : hiredPercentage) * currentPrize / hiredPeoplePerPrize).toFixed(2)
+                } else {
+                    prizeDistribution[i].hiredPrize = 0
+                }
+
+                if (ownerPeoplePerPrize !== -1) {
+                    prizeDistribution[i].ownerPrize = ((halfSplit ? 1 : ownerPercentage) * currentPrize / ownerPeoplePerPrize).toFixed(2)
+                } else {
+                    prizeDistribution[i].ownerPrize = 0
+                }
 
             }
         }
@@ -167,18 +192,6 @@ class Prizes extends Component {
         };
     }
 
-    setPrizeData(value) {
-        this.setState({
-            prizeData: value
-        });
-
-        this.generatePrizeTableContent(value,
-            this.props.eventData.data.prize,
-            this.props.eventData.data.splitLeaderboard,
-            this.props.eventData.data.prize_total.toString(),
-            this.props.eventData.data.dynamicPrizePoolRatio)
-    }
-
     generatePrizeTableContent(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio) {
         this.setPrizeTable(generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio))
     }
@@ -189,19 +202,16 @@ class Prizes extends Component {
         })
     }
 
-    getPrizeData = async () => {
-        let prizeData;
-        let sessionID = this.props.eventData.id.toUpperCase();
-        await revvData.get('prizes', { params: { sessionID: sessionID } }).then((response) => {
-            prizeData = response.data[0]
-            this.setPrizeData(prizeData);
-        }).catch((e) => {
-            console.error(e)
-        })
+    prizeAsyncGenerator = async () => {
+        this.generatePrizeTableContent(this.props.eventData.prizeData,
+            this.props.eventData.data.prize,
+            this.props.eventData.data.splitLeaderboard,
+            this.props.eventData.data.prize_total.toString(),
+            this.props.eventData.data.dynamicPrizePoolRatio)
     }
 
     componentDidMount() {
-        this.getPrizeData()
+        this.prizeAsyncGenerator()
     }
 
     render() {
@@ -327,7 +337,10 @@ export default class Leaderboard extends Component {
     }
 
     setEventData(eventData) {
-        this.setState({ eventData: eventData })
+        this.setState({
+            eventData: eventData,
+            eventDataLoaded: true
+        })
     }
 
     setEventDataLoaded(value) {
@@ -340,11 +353,63 @@ export default class Leaderboard extends Component {
             eventData = response.data
             eventData = formatEventData(eventData);
             this.setEventData(eventData);
-            this.setEventDataLoaded(true);
+        }).catch((e) => {
+            console.error(e)
+        })
+
+        await revvData.get('leaderboards').then((response) => {
+            this.setPrizeData(response.data)
         }).catch((e) => {
             console.error(e)
         })
     };
+
+    setPrizeData(value) {
+        let prizeData = {}
+        value.forEach(element => {
+            let owner = element.leaderboard_id.includes(ownerSuffix)
+            let hired = element.leaderboard_id.includes(hiredSuffix)
+            let sessionID = element.leaderboard_id.replace(leaderboardPrefix, '').replace(ownerSuffix, '').replace(hiredSuffix, '')
+            let count = parseInt(element.count.$numberLong)
+
+            if (owner) {
+                if (!prizeData[sessionID]) {
+                    prizeData[sessionID] = { 'owner': count }
+                } else {
+                    prizeData[sessionID].owner = count
+                }
+            }
+
+            if (hired) {
+                if (!prizeData[sessionID]) {
+                    prizeData[sessionID] = { 'hired': count }
+                } else {
+                    prizeData[sessionID].hired = count
+                }
+            }
+
+            if (!owner && !hired) {
+                if (!prizeData[sessionID]) {
+                    prizeData[sessionID] = { 'total': count }
+                } else {
+                    prizeData[sessionID].total = count
+                }
+            }
+
+            if (prizeData[sessionID] && prizeData[sessionID].hired && prizeData[sessionID].owner) {
+                prizeData[sessionID].total = parseInt(prizeData[sessionID].hired) + parseInt(prizeData[sessionID].owner)
+            }
+        });
+        let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
+
+        eventDeepCopy.forEach(event => {
+            if (prizeData[event.id.toUpperCase()]) {
+                event.prizeData = prizeData[event.id.toUpperCase()]
+            }
+        })
+
+        this.setEventData(eventDeepCopy)
+    }
 
     componentDidMount() {
         this.BasicTable();
@@ -386,7 +451,7 @@ export default class Leaderboard extends Component {
             });
     }
 
-    setWalletPosition = async (walletPositions, walletTransactions) => {
+    setWalletPosition = (walletPositions, walletTransactions) => {
         this.setState({ walletPositions: walletPositions })
         let columnsDeepCopy = JSON.parse(JSON.stringify(this.state.columns));
         columnsDeepCopy = columnsDeepCopy.filter(function (obj) {
@@ -412,12 +477,6 @@ export default class Leaderboard extends Component {
         let totalTries = 0.0
 
         let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
-        let allSessions
-        await revvData.get('prizes').then((response) => {
-            allSessions = response.data
-        }).catch((e) => {
-            console.error(e)
-        })
 
         eventDeepCopy.forEach(event => {
             event.REVVReward = 0.0
@@ -426,9 +485,7 @@ export default class Leaderboard extends Component {
             let tryCount = walletTransactions.reduce(function (n, val) {
                 return n + (new Date(val.timeStamp) >= new Date(event.startTimestamp) && new Date(val.timeStamp) <= new Date(event.endTimestamp));
             }, 0);
-
-
-            let currentSession = getArrayValue(allSessions, "session_id", event.id.toUpperCase())
+            let currentSession = event.prizeData
             if (currentSession && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
                 let currentRank = parseInt(currentWalletPosition.rank)
@@ -493,7 +550,6 @@ export default class Leaderboard extends Component {
 
         this.setTotalPrizes(totalREVV, totalDollars, totalTries)
         this.setEventData(eventDeepCopy)
-        this.setEventDataLoaded(true)
     }
 
     setTotalPrizes(totalREVV, totalDollars, totalTries) {
@@ -510,10 +566,9 @@ export default class Leaderboard extends Component {
         let allleaderboards = await revvData.get('walletPositions', { params: { walletAddress: this.state.walletAddress.toUpperCase() } })
         allleaderboards = allleaderboards.data
         this.state.eventData.forEach(event => {
-            let leaderboardPrefix = 'GAME_SESSION_ALPHA_A_'
             if (event.data.splitLeaderboard) {
-                let ownerLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_OWNER'
-                let hiredLeaderboard = leaderboardPrefix + event.id.toUpperCase() + '_SPLIT_HIRED'
+                let ownerLeaderboard = leaderboardPrefix + event.id.toUpperCase() + ownerSuffix
+                let hiredLeaderboard = leaderboardPrefix + event.id.toUpperCase() + hiredSuffix
                 let ownerEntry = getArrayValue(allleaderboards, 'leaderboard_id', ownerLeaderboard)
                 let hiredEntry = getArrayValue(allleaderboards, 'leaderboard_id', hiredLeaderboard)
 
@@ -541,7 +596,8 @@ export default class Leaderboard extends Component {
             }).catch((e) => {
                 console.error(e);
             });
-        await this.setWalletPosition(walletPositions, txns)
+
+        this.setWalletPosition(walletPositions, txns)
     }
 
     filterTransactions(txns) {
