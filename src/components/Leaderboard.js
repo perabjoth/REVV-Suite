@@ -352,21 +352,23 @@ export default class Leaderboard extends Component {
         await revvData.get('events').then((response) => {
             eventData = response.data
             eventData = formatEventData(eventData);
-            this.setEventData(eventData);
+            
         }).catch((e) => {
             console.error(e)
         })
 
         await revvData.get('leaderboards').then((response) => {
-            this.setPrizeData(response.data)
+            this.setPrizeData(response.data, eventData)
         }).catch((e) => {
             console.error(e)
         })
+        
+        this.setEventData(eventData);
     };
 
-    setPrizeData(value) {
+    setPrizeData(data, eventData) {
         let prizeData = {}
-        value.forEach(element => {
+        data.forEach(element => {
             let owner = element.leaderboard_id.includes(ownerSuffix)
             let hired = element.leaderboard_id.includes(hiredSuffix)
             let sessionID = element.leaderboard_id.replace(leaderboardPrefix, '').replace(ownerSuffix, '').replace(hiredSuffix, '')
@@ -400,15 +402,12 @@ export default class Leaderboard extends Component {
                 prizeData[sessionID].total = parseInt(prizeData[sessionID].hired) + parseInt(prizeData[sessionID].owner)
             }
         });
-        let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
 
-        eventDeepCopy.forEach(event => {
+        eventData.forEach(event => {
             if (prizeData[event.id.toUpperCase()]) {
                 event.prizeData = prizeData[event.id.toUpperCase()]
             }
         })
-
-        this.setEventData(eventDeepCopy)
     }
 
     componentDidMount() {
@@ -452,6 +451,7 @@ export default class Leaderboard extends Component {
     }
 
     setWalletPosition = (walletPositions, walletTransactions) => {
+
         this.setState({ walletPositions: walletPositions })
         let columnsDeepCopy = JSON.parse(JSON.stringify(this.state.columns));
         columnsDeepCopy = columnsDeepCopy.filter(function (obj) {
@@ -476,22 +476,20 @@ export default class Leaderboard extends Component {
         let paidTriesCount = 0.0
         let totalTries = 0.0
 
-        let eventDeepCopy = JSON.parse(JSON.stringify(this.state.eventData));
-
-        eventDeepCopy.forEach(event => {
+        this.state.eventData.forEach(event => {
             event.REVVReward = 0.0
             event.dollarReward = 0.0
             event.rank = 0
             let tryCount = walletTransactions.reduce(function (n, val) {
                 return n + (new Date(val.timeStamp) >= new Date(event.startTimestamp) && new Date(val.timeStamp) <= new Date(event.endTimestamp));
             }, 0);
-            let currentSession = event.prizeData
-            if (currentSession && walletPositions[event.id]) {
+            
+            if (event.prizeData && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
                 let currentRank = parseInt(currentWalletPosition.rank)
                 event.rank = currentRank
                 event.time = millisToMinutesAndSeconds(walletPositions[event.id].time)
-                generatePrizeTable(currentSession,
+                generatePrizeTable(event.prizeData,
                     event.data.prize,
                     event.data.splitLeaderboard,
                     event.data.prize_total.toString(),
@@ -542,6 +540,7 @@ export default class Leaderboard extends Component {
             }
         });
 
+
         if (totalRank > 0 && totalREVV > 0) {
             this.setAverages(totalREVV / participatedREVVCount, totalRank / participatedREVVCount, totalTries / paidTriesCount)
         } else {
@@ -549,7 +548,7 @@ export default class Leaderboard extends Component {
         }
 
         this.setTotalPrizes(totalREVV, totalDollars, totalTries)
-        this.setEventData(eventDeepCopy)
+        this.setEventDataLoaded(true)
     }
 
     setTotalPrizes(totalREVV, totalDollars, totalTries) {
@@ -729,7 +728,8 @@ export default class Leaderboard extends Component {
                             search: false,
                             toolbar: true,
                             grouping: true,
-                            exportButton: true
+                            exportButton: true,
+                            exportAllData: true
 
                         }}
                         onSelectionChange={(rows) => {
