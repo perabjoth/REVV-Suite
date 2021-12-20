@@ -81,6 +81,7 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
         unit = "REVV"
     }
     let prizeTotal = totalPrizeString.replace(/\D/g, '');
+
     if (prizeData && prizeData.total > 0) {
         let totalDrivers = prizeData.total
         let hiredDrivers = prizeData.hired
@@ -88,7 +89,9 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
         let ownerPercentage = (ownerDrivers / totalDrivers)
         let hiredPercentage = (hiredDrivers / totalDrivers)
         let halfSplit = false
+        let useOriginalPrize = false
         if (!dynamicPrizePoolRatio) {
+            useOriginalPrize = (dynamicPrizePoolRatio === undefined)
             ownerPercentage = 0.5
             hiredPercentage = 0.5
             halfSplit = true
@@ -100,6 +103,7 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
             let hiredPeoplePerPrize = 1
             let ownerPeoplePerPrize = 1
             if (prizeDistribution[i].prize < 1 || halfSplit) {
+
                 if (i < prizeDistribution.length - 1) {
                     let j = parseInt(i) + 1
                     if (prizeDistribution[j].rank - prizeDistribution[i].rank > 1) {
@@ -129,15 +133,15 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
                     prizeDistribution[i].rankString = prizeDistribution[i].rank.toString()
                 }
 
-                let currentPrize = prizeDistribution[i].prize * (halfSplit ? 1 : prizeTotal)
+                let currentPrize = prizeDistribution[i].prize * (useOriginalPrize ? 1 : prizeTotal)
                 if (hiredPeoplePerPrize !== -1) {
-                    prizeDistribution[i].hiredPrize = ((halfSplit ? 1 : hiredPercentage) * currentPrize / hiredPeoplePerPrize).toFixed(2)
+                    prizeDistribution[i].hiredPrize = ((useOriginalPrize ? 1 : hiredPercentage) * currentPrize / hiredPeoplePerPrize).toFixed(2)
                 } else {
                     prizeDistribution[i].hiredPrize = 0
                 }
 
                 if (ownerPeoplePerPrize !== -1) {
-                    prizeDistribution[i].ownerPrize = ((halfSplit ? 1 : ownerPercentage) * currentPrize / ownerPeoplePerPrize).toFixed(2)
+                    prizeDistribution[i].ownerPrize = ((useOriginalPrize ? 1 : ownerPercentage) * currentPrize / ownerPeoplePerPrize).toFixed(2)
                 } else {
                     prizeDistribution[i].ownerPrize = 0
                 }
@@ -352,7 +356,7 @@ export default class Leaderboard extends Component {
         await revvData.get('events').then((response) => {
             eventData = response.data
             eventData = formatEventData(eventData);
-            
+
         }).catch((e) => {
             console.error(e)
         })
@@ -362,7 +366,7 @@ export default class Leaderboard extends Component {
         }).catch((e) => {
             console.error(e)
         })
-        
+
         this.setEventData(eventData);
     };
 
@@ -483,7 +487,7 @@ export default class Leaderboard extends Component {
             let tryCount = walletTransactions.reduce(function (n, val) {
                 return n + (new Date(val.timeStamp) >= new Date(event.startTimestamp) && new Date(val.timeStamp) <= new Date(event.endTimestamp));
             }, 0);
-            
+
             if (event.prizeData && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
                 let currentRank = parseInt(currentWalletPosition.rank)
@@ -646,7 +650,7 @@ export default class Leaderboard extends Component {
                         <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="totalRevv"
-                                label="Total REVV (New Prize Structure)"
+                                label="Total REVV (REVV Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
@@ -656,7 +660,7 @@ export default class Leaderboard extends Component {
                         <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="totalDollars"
-                                label="Total Dollars (Old Prize Structure)"
+                                label="Total Dollars ($ Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
@@ -669,7 +673,7 @@ export default class Leaderboard extends Component {
                         <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="averageRank"
-                                label="Average Rank (New Prize Structure)"
+                                label="Average Rank (REVV Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
@@ -679,7 +683,7 @@ export default class Leaderboard extends Component {
                         <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="averageREVV"
-                                label="Average REVV Earned (New Prize Structure)"
+                                label="Average REVV Earned (REVV Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
@@ -692,7 +696,7 @@ export default class Leaderboard extends Component {
                         <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="totalTries"
-                                label="Total Tries (New Prize Structure)"
+                                label="Total Tries (REVV Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
@@ -702,7 +706,7 @@ export default class Leaderboard extends Component {
                         <Grid item md={6} xs={12} alignContent="center" alignItems="center">
                             <TextField
                                 id="averageTries"
-                                label="Average Tries (New Prize Structure)"
+                                label="Average Tries (REVV Prize Structure)"
                                 variant="outlined"
                                 disabled
                                 fullWidth
