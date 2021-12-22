@@ -20,6 +20,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TextField from '@material-ui/core/TextField';
+import Checkbox from '@material-ui/core/Checkbox';
 import theme from './theme';
 import CloseIcon from '@material-ui/icons/Close';
 
@@ -73,7 +74,7 @@ function getArrayValue(array, field, value) {
     return undefined
 }
 
-function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio, percentagePrizePool) {
+function generatePrizeTable(sessionData, participation, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio, percentagePrizePool) {
     let prizeTable = <div></div>
     let unit = "$"
 
@@ -82,12 +83,15 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
     }
     let prizeTotal = totalPrizeString.replace(/\D/g, '');
 
-    if (prizeData && prizeData.total > 0) {
-        let totalDrivers = prizeData.total
-        let hiredDrivers = prizeData.hired
-        let ownerDrivers = prizeData.owner
+    if (sessionData && sessionData.total > 0) {
+        let totalDrivers = sessionData.total
+        let hiredDrivers = sessionData.hired
+        let ownerDrivers = sessionData.owner
         let ownerPercentage = (ownerDrivers / totalDrivers)
         let hiredPercentage = (hiredDrivers / totalDrivers)
+        ownerDrivers = participation.owner
+        hiredDrivers = participation.hired
+
         let halfSplit = false
         let useOriginalPrize = false
         if (!dynamicPrizePoolRatio && splitLeaderboard) {
@@ -97,10 +101,9 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
             halfSplit = true
         }
 
-        if(!splitLeaderboard){
+        if (!splitLeaderboard) {
             ownerPercentage = 1
         }
-        
 
         let rankRange = false
         for (const i in prizeDistribution) {
@@ -142,12 +145,18 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
 
                 if (hiredPeoplePerPrize !== -1) {
                     prizeDistribution[i].hiredPrize = ((useOriginalPrize ? 1 : hiredPercentage) * currentPrize / hiredPeoplePerPrize).toFixed(2)
+                    if (i > 1 && parseInt(prizeDistribution[i].hiredPrize) > parseInt(prizeDistribution[i - 1].hiredPrize)) {
+                        prizeDistribution[i].hiredPrize = 0.3 * prizeDistribution[i - 1].hiredPrize
+                    }
                 } else {
                     prizeDistribution[i].hiredPrize = 0
                 }
 
                 if (ownerPeoplePerPrize !== -1) {
                     prizeDistribution[i].ownerPrize = ((useOriginalPrize ? 1 : ownerPercentage) * currentPrize / ownerPeoplePerPrize).toFixed(2)
+                    if (i > 1 && parseInt(prizeDistribution[i].ownerPrize) > parseInt(prizeDistribution[i - 1].ownerPrize)) {
+                        prizeDistribution[i].ownerPrize = 0.3 * prizeDistribution[i - 1].ownerPrize
+                    }
                 } else {
                     prizeDistribution[i].ownerPrize = 0
                 }
@@ -197,12 +206,11 @@ class Prizes extends Component {
         super(props);
         this.state = {
             prizeTable: <LinearProgress />,
-            prizeData: undefined,
         };
     }
 
-    generatePrizeTableContent(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio,percentagePrizePool) {
-        this.setPrizeTable(generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio,percentagePrizePool))
+    generatePrizeTableContent(sessionData, participation, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio, percentagePrizePool) {
+        this.setPrizeTable(generatePrizeTable(sessionData, participation, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio, percentagePrizePool))
     }
 
     setPrizeTable(value) {
@@ -212,7 +220,8 @@ class Prizes extends Component {
     }
 
     prizeAsyncGenerator = async () => {
-        this.generatePrizeTableContent(this.props.eventData.prizeData,
+        this.generatePrizeTableContent(this.props.eventData.sessionData,
+            this.props.eventData.participation,
             this.props.eventData.data.prize,
             this.props.eventData.data.splitLeaderboard,
             this.props.eventData.data.prize_total.toString(),
@@ -294,6 +303,7 @@ const columns = [
     { title: "Start", field: "startTimestamp", type: "date", filterPlaceholder: 'Filter Start' },
     { title: "End", field: "endTimestamp", type: "date", filterPlaceholder: 'Filter End' },
     { title: "Track", field: "data.track", filterPlaceholder: 'Filter Track' },
+    { title: "Penalties", field: "data.penaltySystem", render: rowData => { return rowData.data.penaltySystem ? <Checkbox checked /> : <Checkbox checked={false} /> } },
     { title: "Laps", field: "data.lapCount", filterPlaceholder: 'Filter Laps' },
     { title: "Weather", field: "data.weather", filterPlaceholder: 'Filter Weather' },
     { title: "Total Prize", field: "data.prize_total_formatted", filterPlaceholder: 'Filter Prize' },
@@ -376,7 +386,7 @@ export default class Leaderboard extends Component {
         this.setEventData(eventData);
     };
 
-    setPrizeData(data, eventData) {
+    setPrizeData = async (data, eventData) => {
         let prizeData = {}
         data.forEach(element => {
             let owner = element.leaderboard_id.includes(ownerSuffix)
@@ -413,10 +423,20 @@ export default class Leaderboard extends Component {
             }
         });
 
-        eventData.forEach(event => {
-            if (prizeData[event.id.toUpperCase()]) {
-                event.prizeData = prizeData[event.id.toUpperCase()]
-            }
+        await revvData.get('sessions').then((response) => {
+            let sessions = response.data
+            eventData.forEach(event => {
+                let currentSessionData = getArrayValue(sessions, 'session_id', event.id.toUpperCase())
+                if (currentSessionData) {
+                    event.sessionData = currentSessionData
+                }
+
+                if (prizeData[event.id.toUpperCase()]) {
+                    event.participation = prizeData[event.id.toUpperCase()]
+                }
+            })
+        }).catch((e) => {
+            console.error(e)
         })
     }
 
@@ -463,7 +483,7 @@ export default class Leaderboard extends Component {
     setWalletPosition = (walletPositions, walletTransactions) => {
 
         this.setState({ walletPositions: walletPositions })
-        let columnsDeepCopy = JSON.parse(JSON.stringify(this.state.columns));
+        let columnsDeepCopy = JSON.parse(JSON.stringify(columns));
         columnsDeepCopy = columnsDeepCopy.filter(function (obj) {
             return obj.field !== '';
         });
@@ -472,7 +492,7 @@ export default class Leaderboard extends Component {
         columnsDeepCopy[3].hidden = false
         columnsDeepCopy[4].hidden = false
         columnsDeepCopy[5].hidden = false
-
+        
         this.setState({
             columns: columnsDeepCopy
         });
@@ -494,12 +514,13 @@ export default class Leaderboard extends Component {
                 return n + (new Date(val.timeStamp) >= new Date(event.startTimestamp) && new Date(val.timeStamp) <= new Date(event.endTimestamp));
             }, 0);
 
-            if (event.prizeData && walletPositions[event.id]) {
+            if (event.sessionData && walletPositions[event.id]) {
                 let currentWalletPosition = walletPositions[event.id]
                 let currentRank = parseInt(currentWalletPosition.rank)
                 event.rank = currentRank
                 event.time = millisToMinutesAndSeconds(walletPositions[event.id].time)
-                generatePrizeTable(event.prizeData,
+                generatePrizeTable(event.sessionData,
+                    event.participation,
                     event.data.prize,
                     event.data.splitLeaderboard,
                     event.data.prize_total.toString(),
@@ -612,8 +633,8 @@ export default class Leaderboard extends Component {
 
     filterTransactions(txns) {
         txns = txns.filter((txn) => {
-            return txn.tokenSymbol === "REVV" && txn.to.toUpperCase() === "0x069895FdA566d0364ABEc6e290BeE3D565c55666".toUpperCase() &&
-                txn.value === "5000000000000000000";
+            return txn.tokenSymbol === "REVV" && (txn.to.toUpperCase() === "0x069895FdA566d0364ABEc6e290BeE3D565c55666".toUpperCase() ||
+                txn.to.toUpperCase() === "0X955694777027A9A343B19D38C3DBEE1D494CFA24") && txn.value === "5000000000000000000";
         });
 
         txns = txns.map((txn) => {
