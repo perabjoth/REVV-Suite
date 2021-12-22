@@ -73,7 +73,7 @@ function getArrayValue(array, field, value) {
     return undefined
 }
 
-function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio) {
+function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio, percentagePrizePool) {
     let prizeTable = <div></div>
     let unit = "$"
 
@@ -90,12 +90,17 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
         let hiredPercentage = (hiredDrivers / totalDrivers)
         let halfSplit = false
         let useOriginalPrize = false
-        if (!dynamicPrizePoolRatio) {
+        if (!dynamicPrizePoolRatio && splitLeaderboard) {
             useOriginalPrize = (dynamicPrizePoolRatio === undefined)
             ownerPercentage = 0.5
             hiredPercentage = 0.5
             halfSplit = true
         }
+
+        if(!splitLeaderboard){
+            ownerPercentage = 1
+        }
+        
 
         let rankRange = false
         for (const i in prizeDistribution) {
@@ -134,6 +139,7 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
                 }
 
                 let currentPrize = prizeDistribution[i].prize * (useOriginalPrize ? 1 : prizeTotal)
+
                 if (hiredPeoplePerPrize !== -1) {
                     prizeDistribution[i].hiredPrize = ((useOriginalPrize ? 1 : hiredPercentage) * currentPrize / hiredPeoplePerPrize).toFixed(2)
                 } else {
@@ -145,7 +151,6 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
                 } else {
                     prizeDistribution[i].ownerPrize = 0
                 }
-
             }
         }
 
@@ -166,7 +171,7 @@ function generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, tota
                                 {prizeRow.rankString ? prizeRow.rankString : prizeRow.rank}
                             </TableCell>
                             <TableCell>
-                                {splitLeaderboard ? prizeRow.ownerPrize : prizeRow.prize} {unit}
+                                {splitLeaderboard || percentagePrizePool ? prizeRow.ownerPrize : prizeRow.prize} {unit}
                             </TableCell>
                             {splitLeaderboard && <TableCell>
                                 {prizeRow.hiredPrize} {unit}
@@ -196,8 +201,8 @@ class Prizes extends Component {
         };
     }
 
-    generatePrizeTableContent(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio) {
-        this.setPrizeTable(generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio))
+    generatePrizeTableContent(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio,percentagePrizePool) {
+        this.setPrizeTable(generatePrizeTable(prizeData, prizeDistribution, splitLeaderboard, totalPrizeString, dynamicPrizePoolRatio,percentagePrizePool))
     }
 
     setPrizeTable(value) {
@@ -211,7 +216,8 @@ class Prizes extends Component {
             this.props.eventData.data.prize,
             this.props.eventData.data.splitLeaderboard,
             this.props.eventData.data.prize_total.toString(),
-            this.props.eventData.data.dynamicPrizePoolRatio)
+            this.props.eventData.data.dynamicPrizePoolRatio,
+            this.props.eventData.data.percentagePrizePool)
     }
 
     componentDidMount() {
@@ -497,7 +503,8 @@ export default class Leaderboard extends Component {
                     event.data.prize,
                     event.data.splitLeaderboard,
                     event.data.prize_total.toString(),
-                    event.data.dynamicPrizePoolRatio)
+                    event.data.dynamicPrizePoolRatio,
+                    event.data.percentagePrizePool)
 
                 let prize = event.data.prize
                 let walletPrize = undefined
@@ -516,10 +523,10 @@ export default class Leaderboard extends Component {
                 event.unit = "REVV"
                 if (walletPrize) {
                     let finalPrize = ''
-                    if (currentWalletPosition.leaderboard_id.includes("SPLIT")) {
+                    if (event.data.splitLeaderboard) {
                         finalPrize = currentWalletPosition.hired ? walletPrize.hiredPrize : walletPrize.ownerPrize
                     } else {
-                        finalPrize = walletPrize.prize
+                        finalPrize = event.data.percentagePrizePool ? walletPrize.ownerPrize : walletPrize.prize
                     }
 
                     if (walletPrize.unit === "REVV") {
