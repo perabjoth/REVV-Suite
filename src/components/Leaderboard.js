@@ -89,8 +89,12 @@ function generatePrizeTable(sessionData, participation, prizeDistribution, split
         let ownerDrivers = sessionData.owner
         let ownerPercentage = (ownerDrivers / totalDrivers)
         let hiredPercentage = (hiredDrivers / totalDrivers)
-        ownerDrivers = participation.owner
-        hiredDrivers = participation.hired
+        if (participation.owner) {
+            ownerDrivers = participation.owner
+            hiredDrivers = participation.hired
+        }else{
+            ownerDrivers = participation.total
+        }
 
         let halfSplit = false
         let useOriginalPrize = false
@@ -492,7 +496,7 @@ export default class Leaderboard extends Component {
         columnsDeepCopy[3].hidden = false
         columnsDeepCopy[4].hidden = false
         columnsDeepCopy[5].hidden = false
-        
+
         this.setState({
             columns: columnsDeepCopy
         });
