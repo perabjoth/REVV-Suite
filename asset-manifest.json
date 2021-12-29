@@ -3,8 +3,8 @@
     "static/js/0.eb52b614.chunk.js": "/REVV-Suite/static/js/0.eb52b614.chunk.js",
     "static/js/0.eb52b614.chunk.js.map": "/REVV-Suite/static/js/0.eb52b614.chunk.js.map",
     "main.css": "/REVV-Suite/static/css/main.011a45fc.chunk.css",
-    "main.js": "/REVV-Suite/static/js/main.6050a539.chunk.js",
-    "main.js.map": "/REVV-Suite/static/js/main.6050a539.chunk.js.map",
+    "main.js": "/REVV-Suite/static/js/main.d3b2a65e.chunk.js",
+    "main.js.map": "/REVV-Suite/static/js/main.d3b2a65e.chunk.js.map",
     "runtime-main.js": "/REVV-Suite/static/js/runtime-main.1decb401.js",
     "runtime-main.js.map": "/REVV-Suite/static/js/runtime-main.1decb401.js.map",
     "static/js/3.fda95a35.chunk.js": "/REVV-Suite/static/js/3.fda95a35.chunk.js",
@@ -50,6 +50,6 @@
     "static/js/runtime-main.1decb401.js",
     "static/js/4.08f6b69b.chunk.js",
     "static/css/main.011a45fc.chunk.css",
-    "static/js/main.6050a539.chunk.js"
+    "static/js/main.d3b2a65e.chunk.js"
   ]
 }
