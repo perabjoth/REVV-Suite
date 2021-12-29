@@ -36,6 +36,9 @@ export default class FreeCar extends Component {
                                     <Link color="secondary" href="https://www.binance.com/en/support/announcement/c-93?navId=93" target="_blank">Binance Earn</Link>
                                 </li>
                                 <li>
+                                    <Link color="secondary" href="https://earnathon.com/learn" target="_blank">Earnathon</Link>
+                                </li>
+                                <li>
                                     <Link color="secondary" href="https://phemex.com/learn-crypto" target="_blank">Phemex Earn</Link>
                                 </li>
                                 <li>
