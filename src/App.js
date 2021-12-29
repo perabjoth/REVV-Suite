@@ -14,6 +14,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import GasTracker from './components/GasTracker';
+import FreeCar from './components/FreeCar';
 const Home = lazy(() => import('./components/Home'));
 const Leaderboard = lazy(() => import('./components/Leaderboard'));
 const Transactions = lazy(() => import('./components/Transactions'));
@@ -56,6 +57,9 @@ function App() {
               </Routes>
               <Routes>
                 <Route path="/Gas" element={<GasTracker />} />
+              </Routes>
+              <Routes>
+                <Route path="/Free" element={<FreeCar />} />
               </Routes>
             </Container>
           </Box>

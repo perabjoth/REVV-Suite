@@ -12,6 +12,7 @@ import Avatar from '@material-ui/core/Avatar';
 import REVVlogo from '../img/REVV_logo.gif';
 import FormatListNumberedIcon from '@material-ui/icons/FormatListNumbered';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
+import DirectionsCarIcon from '@material-ui/icons/DirectionsCar';
 import LocalGasStationIcon from '@material-ui/icons/LocalGasStation';
 import FlagIcon from '@material-ui/icons/Flag';
 import Home from '@material-ui/icons/Home';
@@ -62,6 +63,15 @@ function GasLink() {
     </NavLink>
 }
 
+function FreeLink() {
+    return <NavLink className="navLink" to="/Free">
+        <DirectionsCarIcon style={{ marginTop: "4px" }} />
+        <Typography variant="h5" noWrap component="div"  >
+            Free Cars
+        </Typography>
+    </NavLink>
+}
+
 export default function Header() {
     const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -94,6 +104,7 @@ export default function Header() {
                     <RewardLink />
                     <TrackLink/>
                     <GasLink/>
+                    <FreeLink/>
                 </div>}
                 {isMobile && <div> 
                     <IconButton
@@ -118,6 +129,7 @@ export default function Header() {
                         <MenuItem onClick={handleClose}><RewardLink /></MenuItem>
                         <MenuItem onClick={handleClose}><TrackLink/></MenuItem>
                         <MenuItem onClick={handleClose}><GasLink/></MenuItem>
+                        <MenuItem onClick={handleClose}><FreeLink/></MenuItem>
                     </Menu>
                 </div>
                 }
