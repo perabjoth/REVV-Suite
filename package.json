@@ -9,6 +9,7 @@
     "@emotion/styled": "^11.3.0",
     "@material-table/core": "^4.3.9",
     "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.60",
     "@mui/icons-material": "^5.1.0",
     "@mui/lab": "*",
     "@mui/material": "^5.1.0",

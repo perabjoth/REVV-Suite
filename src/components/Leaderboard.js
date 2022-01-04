@@ -6,6 +6,7 @@ import CoingeckoPrice from '../api/CoingeckoPrice';
 import revvData from '../api/revvData';
 import revvTransactions from '../api/revvTransactions'
 import Popup from 'reactjs-popup';
+import Alert from '@material-ui/lab/Alert';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
@@ -92,7 +93,7 @@ function generatePrizeTable(sessionData, participation, prizeDistribution, split
         if (participation.owner) {
             ownerDrivers = participation.owner
             hiredDrivers = participation.hired
-        }else{
+        } else {
             ownerDrivers = participation.total
         }
 
@@ -149,8 +150,8 @@ function generatePrizeTable(sessionData, participation, prizeDistribution, split
 
                 if (hiredPeoplePerPrize !== -1) {
                     prizeDistribution[i].hiredPrize = ((useOriginalPrize ? 1 : hiredPercentage) * currentPrize / hiredPeoplePerPrize).toFixed(2)
-                    if (i > 1 && parseInt(prizeDistribution[i].hiredPrize) > parseInt(prizeDistribution[i - 1].hiredPrize)) {
-                        prizeDistribution[i].hiredPrize = 0.3 * prizeDistribution[i - 1].hiredPrize
+                    if (i == prizeDistribution.length - 1 && parseInt(prizeDistribution[i].hiredPrize) > 0.3 * parseInt(prizeDistribution[i - 1].hiredPrize)) {
+                        prizeDistribution[i].hiredPrize = (0.3 * prizeDistribution[i - 1].hiredPrize).toFixed(2)
                     }
                 } else {
                     prizeDistribution[i].hiredPrize = 0
@@ -158,8 +159,8 @@ function generatePrizeTable(sessionData, participation, prizeDistribution, split
 
                 if (ownerPeoplePerPrize !== -1) {
                     prizeDistribution[i].ownerPrize = ((useOriginalPrize ? 1 : ownerPercentage) * currentPrize / ownerPeoplePerPrize).toFixed(2)
-                    if (i > 1 && parseInt(prizeDistribution[i].ownerPrize) > parseInt(prizeDistribution[i - 1].ownerPrize)) {
-                        prizeDistribution[i].ownerPrize = 0.3 * prizeDistribution[i - 1].ownerPrize
+                    if (i == prizeDistribution.length - 1 && parseInt(prizeDistribution[i].ownerPrize) > 0.3 * parseInt(prizeDistribution[i - 1].ownerPrize)) {
+                        prizeDistribution[i].ownerPrize = (0.3 * prizeDistribution[i - 1].ownerPrize).toFixed(2)
                     }
                 } else {
                     prizeDistribution[i].ownerPrize = 0
@@ -308,6 +309,7 @@ const columns = [
     { title: "End", field: "endTimestamp", type: "date", filterPlaceholder: 'Filter End' },
     { title: "Track", field: "data.track", filterPlaceholder: 'Filter Track' },
     { title: "Penalties", field: "data.penaltySystem", render: rowData => { return rowData.data.penaltySystem ? <Checkbox checked /> : <Checkbox checked={false} /> } },
+    { title: "Split", field: "data.splitLeaderboard", render: rowData => { return rowData.data.splitLeaderboard ? <Checkbox checked /> : <Checkbox checked={false} /> } },
     { title: "Laps", field: "data.lapCount", filterPlaceholder: 'Filter Laps' },
     { title: "Weather", field: "data.weather", filterPlaceholder: 'Filter Weather' },
     { title: "Total Prize", field: "data.prize_total_formatted", filterPlaceholder: 'Filter Prize' },
@@ -663,6 +665,9 @@ export default class Leaderboard extends Component {
 
         return (
             <Grid container spacing={3} >
+                <Grid item md={12} xs={12}>
+                    <Alert severity="error">Calculations may not always be correct!</Alert>
+                </Grid>
                 <Grid item md={12} xs={12}>
                     <TextField
                         id="wallet-address"
