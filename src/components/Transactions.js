@@ -129,7 +129,8 @@ export default class Transactions extends Component {
 
     filterData(txns) {
         txns = txns.filter((txn) => {
-            return txn.tokenSymbol === "REVV" && txn.from === "0x9c8a06f0197ee718cd820adeb48a88ea2a9b5c48";
+            return txn.tokenSymbol === "REVV" && (txn.from === "0x9c8a06f0197ee718cd820adeb48a88ea2a9b5c48" ||
+            txn.from === "0x491791611aea5531e5be9d9abecb428939bd26e3");
         });
         return txns;
     }
